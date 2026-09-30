@@ -221,8 +221,8 @@ export default function AppLauncher({
                 {/* Specular gloss highlight */}
                 <div className="absolute inset-0 rounded-2xl sm:rounded-3xl bg-gradient-to-b from-white/35 via-transparent to-black/25 pointer-events-none" />
 
-                {/* Unread Update indicator for Updates app */}
-                {app.id === 'updates' && hasUnreadUpdates && (
+                {/* Unread Update indicator for Settings app */}
+                {app.id === 'settings' && hasUnreadUpdates && (
                   <span className="absolute -top-1.5 -left-1.5 z-20 px-1.5 py-0.5 rounded-full bg-emerald-400 text-slate-950 text-[9px] font-extrabold uppercase tracking-wider shadow-lg border border-white/40 animate-pulse">
                     NEW
                   </span>

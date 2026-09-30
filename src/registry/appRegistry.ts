@@ -169,13 +169,27 @@ const APP_REGISTRY: RegisteredApp[] = [
   {
     id: 'settings',
     name: 'Settings',
-    description: 'Liquid Glass personalization, wallpapers, widgets, and data backup',
+    description: 'Liquid Glass personalization, wallpapers, system updates & changelogs, and data backup',
     icon: SettingsIcon,
     category: 'utilities',
-    keywords: ['settings', 'preferences', 'theme', 'dark mode', 'wallpaper', 'backup', 'glass'],
+    keywords: [
+      'settings',
+      'preferences',
+      'theme',
+      'dark mode',
+      'wallpaper',
+      'backup',
+      'glass',
+      'updates',
+      'version',
+      'changelog',
+      'release',
+      'what is new',
+      'upgrade'
+    ],
     gradient: 'from-slate-500 to-zinc-700',
     component: SettingsApp,
-    defaultWindowSize: { width: 880, height: 620 }
+    defaultWindowSize: { width: 920, height: 640 }
   },
   {
     id: 'hearings',
@@ -354,26 +368,6 @@ const APP_REGISTRY: RegisteredApp[] = [
     gradient: 'from-blue-600 via-indigo-600 to-purple-600',
     component: DashboardBuilderApp,
     defaultWindowSize: { width: 1120, height: 750 }
-  },
-  {
-    id: 'updates',
-    name: 'Updates',
-    description: 'Check for updates, release notes, changelogs, and recent improvements across SuperDash',
-    icon: UpdatesIcon,
-    category: 'utilities',
-    keywords: [
-      'updates',
-      'update',
-      'version',
-      'changelog',
-      'what is new',
-      'release',
-      'upgrade',
-      'system'
-    ],
-    gradient: 'from-emerald-500 via-teal-600 to-cyan-600',
-    component: UpdatesApp,
-    defaultWindowSize: { width: 780, height: 600 }
   }
 ]
 

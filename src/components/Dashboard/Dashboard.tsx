@@ -95,6 +95,10 @@ export default function Dashboard() {
   // Open App handler
   const handleOpenApp = useCallback((appId: string, customProps?: Record<string, unknown>) => {
     sounds.playClick()
+    if (appId === 'updates') {
+      appId = 'settings'
+      customProps = { ...(customProps || {}), initialTab: 'updates' }
+    }
     recentAppsService.recordAppLaunch(appId)
     setOpenAppIds(prev => (prev.includes(appId) ? prev : [...prev, appId]))
     setMinimizedAppIds(prev => prev.filter(id => id !== appId))

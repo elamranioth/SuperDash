@@ -27,6 +27,8 @@ import { toLocalYYYYMMDD } from '@/utils/date'
 import { sounds } from '@/utils/sound'
 import GlassPanel from '@/components/LiquidGlass/GlassPanel'
 import AppHeader from '@/components/AppWindow/AppHeader'
+import UpdatesApp from '@/apps/updates/UpdatesApp'
+import { updateService } from '@/services/updateService'
 
 const APP_META: Record<string, string> = {
   calculator: 'Calculator',
@@ -53,18 +55,35 @@ const APP_META: Record<string, string> = {
   updates: 'Updates'
 }
 
+export type SettingsTabId =
+  | 'appearance'
+  | 'dashboard'
+  | 'markets'
+  | 'timer'
+  | 'accessibility'
+  | 'data'
+  | 'updates'
+
 interface SettingsAppProps {
+  initialTab?: SettingsTabId
   onSettingsChange?: (newSettings: DashboardSettings) => void
   onOpenApp?: (appId: string) => void
 }
 
-export default function SettingsApp({ onSettingsChange, onOpenApp }: SettingsAppProps) {
+export default function SettingsApp({ initialTab = 'appearance', onSettingsChange, onOpenApp }: SettingsAppProps) {
   const [settings, setSettings] = useState<DashboardSettings>(DEFAULT_SETTINGS)
   const [savedNotice, setSavedNotice] = useState(false)
-  const [activeTab, setActiveTab] = useState<
-    'appearance' | 'dashboard' | 'markets' | 'timer' | 'accessibility' | 'data'
-  >('appearance')
+  const [activeTab, setActiveTab] = useState<SettingsTabId>(initialTab)
+  const [hasUnreadUpdates, setHasUnreadUpdates] = useState<boolean>(() => updateService.hasUnreadUpdates())
   const [wallpaperCat, setWallpaperCat] = useState<WallpaperCategory | 'all'>('all')
+
+  useEffect(() => {
+    const handleUpdatesViewed = () => {
+      setHasUnreadUpdates(updateService.hasUnreadUpdates())
+    }
+    window.addEventListener('superdash_updates_viewed', handleUpdatesViewed)
+    return () => window.removeEventListener('superdash_updates_viewed', handleUpdatesViewed)
+  }, [])
 
   useEffect(() => {
     storageService.get<DashboardSettings>('settings', DEFAULT_SETTINGS).then(s => {
@@ -162,7 +181,8 @@ export default function SettingsApp({ onSettingsChange, onOpenApp }: SettingsApp
     { id: 'markets', label: 'Markets Watchlist', icon: Coins, keywords: 'crypto btc aed mad currency ticker' },
     { id: 'timer', label: 'Timer & Hourglass', icon: Hourglass, keywords: 'sound alarm countdown pomodoro chime' },
     { id: 'accessibility', label: 'Accessibility & Motion', icon: Accessibility, keywords: 'reduce motion animation sounds haptics' },
-    { id: 'data', label: 'Data & Cloud Portability', icon: Sliders, keywords: 'backup json export import reset wipe restore' }
+    { id: 'data', label: 'Data & Cloud Portability', icon: Sliders, keywords: 'backup json export import reset wipe restore' },
+    { id: 'updates', label: "Updates & What's New", icon: Sparkles, keywords: 'updates version changelog release new features apk patch system' }
   ]
 
   const filteredTabs = tabs.filter(t => 
@@ -176,7 +196,7 @@ export default function SettingsApp({ onSettingsChange, onOpenApp }: SettingsApp
       {/* Standard AppHeader */}
       <AppHeader
         title="Settings"
-        subtitle="System preferences, liquid glass, launcher and data backups"
+        subtitle="System preferences, liquid glass, launcher, updates and data backups"
         icon={Sliders}
       />
 
@@ -190,9 +210,13 @@ export default function SettingsApp({ onSettingsChange, onOpenApp }: SettingsApp
               key={tab.id}
               onClick={() => {
                 sounds.playClick()
-                setActiveTab(tab.id as typeof activeTab)
+                setActiveTab(tab.id as SettingsTabId)
+                if (tab.id === 'updates') {
+                  updateService.markUpdatesAsViewed()
+                  setHasUnreadUpdates(false)
+                }
               }}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium whitespace-nowrap transition shrink-0 ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium whitespace-nowrap transition shrink-0 relative ${
                 isActive
                   ? 'bg-indigo-600 text-white shadow-sm font-semibold'
                   : 'bg-white/5 text-slate-400 hover:text-white'
@@ -200,6 +224,11 @@ export default function SettingsApp({ onSettingsChange, onOpenApp }: SettingsApp
             >
               <Icon className="w-3.5 h-3.5" />
               <span>{tab.label}</span>
+              {tab.id === 'updates' && hasUnreadUpdates && (
+                <span className="px-1.5 py-0.2 rounded-full bg-emerald-400 text-slate-950 text-[9px] font-extrabold uppercase tracking-wider animate-pulse ml-1">
+                  NEW
+                </span>
+              )}
             </button>
           )
         })}
@@ -231,14 +260,25 @@ export default function SettingsApp({ onSettingsChange, onOpenApp }: SettingsApp
                   key={tab.id}
                   onClick={() => {
                     sounds.playClick()
-                    setActiveTab(tab.id as typeof activeTab)
+                    setActiveTab(tab.id as SettingsTabId)
+                    if (tab.id === 'updates') {
+                      updateService.markUpdatesAsViewed()
+                      setHasUnreadUpdates(false)
+                    }
                   }}
-                  className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition ${
+                  className={`w-full flex items-center justify-between gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition ${
                     isActive ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400 hover:text-white hover:bg-white/5'
                   }`}
                 >
-                  <Icon className="w-4 h-4" />
-                  <span className="truncate">{tab.label}</span>
+                  <div className="flex items-center gap-2.5 truncate">
+                    <Icon className="w-4 h-4 shrink-0" />
+                    <span className="truncate">{tab.label}</span>
+                  </div>
+                  {tab.id === 'updates' && hasUnreadUpdates && (
+                    <span className="px-1.5 py-0.2 rounded-full bg-emerald-400 text-slate-950 text-[9px] font-extrabold uppercase tracking-wider animate-pulse shrink-0">
+                      NEW
+                    </span>
+                  )}
                 </button>
               )
             })}
@@ -253,9 +293,14 @@ export default function SettingsApp({ onSettingsChange, onOpenApp }: SettingsApp
         </div>
 
       {/* Settings Content Area */}
-      <div className="flex-1 p-4 sm:p-6 md:p-8 overflow-y-auto space-y-6 sm:space-y-8 max-w-3xl">
-        {/* Appearance Tab */}
-        {activeTab === 'appearance' && (
+      {activeTab === 'updates' ? (
+        <div className="flex-1 h-full overflow-hidden flex flex-col bg-slate-950/40">
+          <UpdatesApp isEmbedded={true} onOpenApp={onOpenApp} />
+        </div>
+      ) : (
+        <div className="flex-1 p-4 sm:p-6 md:p-8 overflow-y-auto space-y-6 sm:space-y-8 max-w-3xl">
+          {/* Appearance Tab */}
+          {activeTab === 'appearance' && (
           <div className="space-y-6">
             <div>
               <h3 className="text-base font-bold text-white mb-1">Color Theme</h3>
@@ -637,11 +682,9 @@ export default function SettingsApp({ onSettingsChange, onOpenApp }: SettingsApp
                 <button
                   onClick={() => {
                     sounds.playClick()
-                    if (onOpenApp) {
-                      onOpenApp('updates')
-                    } else {
-                      window.dispatchEvent(new CustomEvent('superdash_open_app', { detail: { appId: 'updates' } }))
-                    }
+                    setActiveTab('updates')
+                    updateService.markUpdatesAsViewed()
+                    setHasUnreadUpdates(false)
                   }}
                   className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-md transition flex items-center gap-1.5"
                 >
@@ -666,6 +709,7 @@ export default function SettingsApp({ onSettingsChange, onOpenApp }: SettingsApp
           </div>
         )}
       </div>
+      )}
     </div>
   </div>
 )

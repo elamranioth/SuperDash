@@ -30,9 +30,10 @@ import MobileAppShell from '@/components/Mobile/MobileAppShell'
 
 interface UpdatesAppProps {
   onOpenApp?: (appId: string) => void
+  isEmbedded?: boolean
 }
 
-export default function UpdatesApp({ onOpenApp }: UpdatesAppProps) {
+export default function UpdatesApp({ onOpenApp, isEmbedded = false }: UpdatesAppProps) {
   const [loading, setLoading] = useState<boolean>(true)
   const [checking, setChecking] = useState<boolean>(false)
   const [release, setRelease] = useState<ReleaseInfo | null>(null)
@@ -131,8 +132,8 @@ export default function UpdatesApp({ onOpenApp }: UpdatesAppProps) {
       ? 'Progressive Web App'
       : 'Web App'
 
-  return (
-    <MobileAppShell title="Updates & What's New" className="bg-slate-950/95 text-slate-100 flex flex-col h-full">
+  const body = (
+    <div className={`text-slate-100 flex flex-col h-full overflow-hidden ${isEmbedded ? 'bg-transparent' : 'bg-slate-950/95'}`}>
       {/* Top Banner / Status Hero */}
       <div className="p-4 sm:p-6 border-b border-white/10 bg-gradient-to-br from-indigo-950/40 via-black/40 to-black/60 shrink-0">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -455,6 +456,16 @@ export default function UpdatesApp({ onOpenApp }: UpdatesAppProps) {
           </div>
         )}
       </div>
+    </div>
+  )
+
+  if (isEmbedded) {
+    return body
+  }
+
+  return (
+    <MobileAppShell title="Updates & What's New" className="bg-slate-950/95 text-slate-100 flex flex-col h-full">
+      {body}
     </MobileAppShell>
   )
 }
