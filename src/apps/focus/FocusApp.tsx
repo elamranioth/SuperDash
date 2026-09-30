@@ -20,7 +20,9 @@ import {
   Hourglass as HourglassIcon,
   CircleDot,
   Type,
-  Binary
+  Binary,
+  Timer as TimerIcon,
+  Globe
 } from 'lucide-react'
 import confetti from 'canvas-confetti'
 import { FocusSession, FocusSettings, TimerVisualMode } from '@/types'
@@ -37,7 +39,15 @@ import GlassModal from '@/components/LiquidGlass/GlassModal'
 import AppHeader from '@/components/AppWindow/AppHeader'
 import { sounds } from '@/utils/sound'
 
-export default function FocusApp() {
+interface FocusAppProps {
+  activeTimeMode?: 'timer' | 'focus' | 'world'
+  onSelectTimeMode?: (mode: 'timer' | 'focus' | 'world') => void
+}
+
+export default function FocusApp({
+  activeTimeMode = 'focus',
+  onSelectTimeMode
+}: FocusAppProps = {}) {
   const [activeSession, setActiveSession] = useState<ActiveFocusState | null>(focusService.getActiveSession())
   const [taskTitle, setTaskTitle] = useState('')
   const [selectedMinutes, setSelectedMinutes] = useState<number>(25)
@@ -366,7 +376,36 @@ export default function FocusApp() {
           icon: Settings,
           onClick: () => setShowSettingsModal(true)
         }}
-      />
+      >
+        {onSelectTimeMode && (
+          <div className="flex items-center p-0.5 rounded-xl bg-white/10 border border-white/10 shrink-0">
+            <button
+              onClick={() => {
+                sounds.playClick()
+                onSelectTimeMode('timer')
+              }}
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium text-slate-300 hover:text-white transition"
+            >
+              <TimerIcon className="w-3.5 h-3.5 text-violet-400" />
+              <span>Timer</span>
+            </button>
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-indigo-600 text-white shadow-sm">
+              <Target className="w-3.5 h-3.5" />
+              <span>Focus</span>
+            </div>
+            <button
+              onClick={() => {
+                sounds.playClick()
+                onSelectTimeMode('world')
+              }}
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium text-slate-300 hover:text-white transition"
+            >
+              <Globe className="w-3.5 h-3.5 text-teal-400" />
+              <span>World</span>
+            </button>
+          </div>
+        )}
+      </AppHeader>
 
       {/* Main Focus Card */}
       <div className="max-w-xl mx-auto w-full space-y-5 p-4 sm:p-6 my-auto">

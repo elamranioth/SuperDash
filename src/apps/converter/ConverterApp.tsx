@@ -16,7 +16,8 @@ import {
   Trash2,
   Search,
   RotateCw,
-  X
+  X,
+  Calculator as CalcIcon
 } from 'lucide-react'
 import { sounds } from '@/utils/sound'
 import { exchangeRateService, ISO_CURRENCIES } from '@/services/currency'
@@ -157,11 +158,15 @@ const STANDARD_CATEGORIES: Array<{
 interface ConverterAppProps {
   initialFromCurrency?: string
   initialToCurrency?: string
+  isEmbedded?: boolean
+  onSwitchToCalc?: () => void
 }
 
 export default function ConverterApp({
   initialFromCurrency = 'USD',
-  initialToCurrency = 'AED'
+  initialToCurrency = 'AED',
+  isEmbedded = false,
+  onSwitchToCalc
 }: ConverterAppProps) {
   const [activeCategory, setActiveCategory] = useState<ConversionCategory>('currency')
 
@@ -331,6 +336,24 @@ export default function ConverterApp({
         }
       >
         <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+          {onSwitchToCalc && (
+            <div className="flex items-center p-0.5 rounded-xl bg-white/10 border border-white/10 shrink-0 mr-1.5">
+              <button
+                onClick={() => {
+                  sounds.playClick()
+                  onSwitchToCalc()
+                }}
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium text-slate-300 hover:text-white transition"
+              >
+                <CalcIcon className="w-3.5 h-3.5 text-amber-400" />
+                <span>Calculate</span>
+              </button>
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-cyan-500 text-white shadow-sm">
+                <ArrowLeftRight className="w-3.5 h-3.5" />
+                <span>Convert</span>
+              </div>
+            </div>
+          )}
           <button
             onClick={() => {
               sounds.playClick()

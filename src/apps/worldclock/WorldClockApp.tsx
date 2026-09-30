@@ -10,7 +10,9 @@ import {
   Sunset,
   Moon,
   Clock,
-  LucideIcon
+  LucideIcon,
+  Timer as TimerIcon,
+  Target
 } from 'lucide-react'
 import { storageService } from '@/services/storage'
 import { sounds } from '@/utils/sound'
@@ -135,7 +137,15 @@ function getDayNightPhase(timezone: string): {
   }
 }
 
-export default function WorldClockApp() {
+interface WorldClockAppProps {
+  activeTimeMode?: 'timer' | 'focus' | 'world'
+  onSelectTimeMode?: (mode: 'timer' | 'focus' | 'world') => void
+}
+
+export default function WorldClockApp({
+  activeTimeMode = 'world',
+  onSelectTimeMode
+}: WorldClockAppProps = {}) {
   const [activeCities, setActiveCities] = useState<CityTimezone[]>([
     GLOBAL_CITIES[0], // Dubai
     GLOBAL_CITIES[1], // Manila
@@ -233,10 +243,40 @@ export default function WorldClockApp() {
           onClick: () => setIsAddModalOpen(true)
         }}
       >
-        <div className="flex items-center justify-between">
-          <span className="text-xs text-slate-400">
-            {activeCities.length} tracked {activeCities.length === 1 ? 'city' : 'cities'}
-          </span>
+        <div className="flex items-center justify-between gap-3 overflow-x-auto no-scrollbar py-0.5">
+          <div className="flex items-center gap-2">
+            {onSelectTimeMode && (
+              <div className="flex items-center p-0.5 rounded-xl bg-white/10 border border-white/10 shrink-0">
+                <button
+                  onClick={() => {
+                    sounds.playClick()
+                    onSelectTimeMode('timer')
+                  }}
+                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium text-slate-300 hover:text-white transition"
+                >
+                  <TimerIcon className="w-3.5 h-3.5 text-violet-400" />
+                  <span>Timer</span>
+                </button>
+                <button
+                  onClick={() => {
+                    sounds.playClick()
+                    onSelectTimeMode('focus')
+                  }}
+                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium text-slate-300 hover:text-white transition"
+                >
+                  <Target className="w-3.5 h-3.5 text-indigo-400" />
+                  <span>Focus</span>
+                </button>
+                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-teal-600 text-white shadow-sm">
+                  <Globe className="w-3.5 h-3.5" />
+                  <span>World</span>
+                </div>
+              </div>
+            )}
+            <span className="text-xs text-slate-400 hidden sm:inline">
+              {activeCities.length} tracked {activeCities.length === 1 ? 'city' : 'cities'}
+            </span>
+          </div>
 
           <div className="flex items-center bg-white/5 rounded-xl p-0.5 border border-white/10 text-xs">
             <button

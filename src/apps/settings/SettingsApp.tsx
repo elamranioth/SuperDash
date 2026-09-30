@@ -31,28 +31,21 @@ import UpdatesApp from '@/apps/updates/UpdatesApp'
 import { updateService } from '@/services/updateService'
 
 const APP_META: Record<string, string> = {
-  calculator: 'Calculator',
   notes: 'Notes',
   calendar: 'Calendar',
-  weather: 'Weather',
   tasks: 'Tasks',
-  timer: 'Timer',
-  converter: 'Converter',
-  settings: 'Settings',
-  reminders: 'Reminders',
-  files: 'Files',
-  worldclock: 'World Clock',
-  hearings: 'Hearings',
-  finance: 'Finance',
   ideas: 'Ideas',
-  focus: 'Focus',
   decisionbook: 'Decision Book',
-  morning: 'Morning',
+  collections: 'Collections',
   reader: 'Reader',
   live: 'Live',
-  collections: 'Collections',
-  dashboardbuilder: 'Dashboard Builder',
-  updates: 'Updates'
+  hearings: 'Hearings',
+  finance: 'Finance',
+  calculator: 'Calculator',
+  time: 'Time',
+  weather: 'Weather',
+  files: 'Files',
+  settings: 'Settings'
 }
 
 export type SettingsTabId =
@@ -438,6 +431,31 @@ export default function SettingsApp({ initialTab = 'appearance', onSettingsChang
         {/* Dashboard & Launcher Tab */}
         {activeTab === 'dashboard' && (
           <div className="space-y-6">
+            {/* Dashboard Builder & Customization */}
+            <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-blue-900/30 via-indigo-900/20 to-purple-900/30 border border-indigo-500/20 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h3 className="text-base font-bold text-white flex items-center gap-2">
+                  <Layout className="w-4 h-4 text-indigo-400" />
+                  <span>Dashboard Workspaces & Layout</span>
+                </h3>
+                <p className="text-xs text-slate-300 mt-1 max-w-md">
+                  Rearrange widgets, resize cards, customize workspace layouts, and create tailored dashboards for Legal, Focus, or Morning.
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  sounds.playClick()
+                  if (onOpenApp) {
+                    onOpenApp('dashboardbuilder')
+                  }
+                }}
+                className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white text-xs font-semibold shadow-md shadow-indigo-600/30 transition flex items-center justify-center gap-2 shrink-0"
+              >
+                <Layout className="w-3.5 h-3.5" />
+                <span>Open Dashboard Builder</span>
+              </button>
+            </div>
+
             <div>
               <h3 className="text-base font-bold text-white mb-1">Clock Display Format</h3>
               <div className="grid grid-cols-2 gap-3 max-w-md my-3">

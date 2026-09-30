@@ -15,7 +15,9 @@ import {
   CircleDot,
   Type,
   Binary,
-  Volume2
+  Volume2,
+  Target,
+  Globe
 } from 'lucide-react'
 import { timerService, TimerState } from '@/services/timer'
 import { storageService, INITIAL_TIMER_PRESETS } from '@/services/storage'
@@ -27,7 +29,15 @@ import AppHeader from '@/components/AppWindow/AppHeader'
 import MobileBottomSheet from '@/components/Mobile/MobileBottomSheet'
 import { sounds } from '@/utils/sound'
 
-export default function TimerApp() {
+interface TimerAppProps {
+  activeTimeMode?: 'timer' | 'focus' | 'world'
+  onSelectTimeMode?: (mode: 'timer' | 'focus' | 'world') => void
+}
+
+export default function TimerApp({
+  activeTimeMode = 'timer',
+  onSelectTimeMode
+}: TimerAppProps = {}) {
   const [timerState, setTimerState] = useState<TimerState>(timerService.getState())
   const [presets, setPresets] = useState<TimerPreset[]>(INITIAL_TIMER_PRESETS)
   const [isRestarting, setIsRestarting] = useState(false)
@@ -155,7 +165,36 @@ export default function TimerApp() {
         gradient="from-violet-500 to-purple-600"
       >
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-white/5 border border-white/10">
+          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5">
+            {onSelectTimeMode && (
+              <div className="flex items-center p-0.5 rounded-xl bg-white/10 border border-white/10 shrink-0 mr-1">
+                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-violet-600 text-white shadow-sm">
+                  <TimerIcon className="w-3.5 h-3.5" />
+                  <span>Timer</span>
+                </div>
+                <button
+                  onClick={() => {
+                    sounds.playClick()
+                    onSelectTimeMode('focus')
+                  }}
+                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium text-slate-300 hover:text-white transition"
+                >
+                  <Target className="w-3.5 h-3.5 text-indigo-400" />
+                  <span>Focus</span>
+                </button>
+                <button
+                  onClick={() => {
+                    sounds.playClick()
+                    onSelectTimeMode('world')
+                  }}
+                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium text-slate-300 hover:text-white transition"
+                >
+                  <Globe className="w-3.5 h-3.5 text-teal-400" />
+                  <span>World</span>
+                </button>
+              </div>
+            )}
+            <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-white/5 border border-white/10">
             {[
               { id: 'countdown', label: 'Timer', icon: TimerIcon },
               { id: 'pomodoro', label: 'Pomodoro', icon: Flame },
@@ -182,6 +221,7 @@ export default function TimerApp() {
                 </button>
               )
             })}
+            </div>
           </div>
 
           {/* Visual Mode Picker (for Countdown & Pomodoro) */}

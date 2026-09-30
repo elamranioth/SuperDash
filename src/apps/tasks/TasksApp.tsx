@@ -11,7 +11,10 @@ import {
   Search,
   ChevronRight,
   Sparkles,
-  ArrowRight
+  ArrowRight,
+  Bell,
+  Clock,
+  Repeat
 } from 'lucide-react'
 import confetti from 'canvas-confetti'
 import { TaskItem, TaskPriority } from '@/types'
@@ -21,11 +24,15 @@ import { formatSmartDate, toLocalYYYYMMDD } from '@/utils/date'
 import AppHeader from '@/components/AppWindow/AppHeader'
 import EmptyState from '@/components/LiquidGlass/EmptyState'
 
-type TaskFilterTab = 'today' | 'upcoming' | 'all' | 'completed'
+export type TaskFilterTab = 'today' | 'upcoming' | 'reminders' | 'all' | 'completed'
 
-export default function TasksApp() {
+interface TasksAppProps {
+  initialFilter?: TaskFilterTab
+}
+
+export default function TasksApp({ initialFilter = 'today' }: TasksAppProps = {}) {
   const [tasks, setTasks] = useState<TaskItem[]>([])
-  const [activeTab, setActiveTab] = useState<TaskFilterTab>('today')
+  const [activeTab, setActiveTab] = useState<TaskFilterTab>(initialFilter)
   const [searchQuery, setSearchQuery] = useState('')
 
   // Quick Add input state
@@ -78,13 +85,16 @@ export default function TasksApp() {
     if (!quickTitle.trim()) return
 
     sounds.playClick()
+    const isReminderTab = activeTab === 'reminders'
     const newTask: TaskItem = {
       id: 'task-' + Date.now(),
       title: quickTitle.trim(),
       completed: false,
       priority: quickPriority,
       dueDate: quickDueDate,
-      tag: 'General',
+      reminderTime: isReminderTab ? '16:00' : undefined,
+      hasReminder: isReminderTab,
+      tag: isReminderTab ? 'Reminder' : 'General',
       createdAt: Date.now()
     }
 
@@ -124,6 +134,9 @@ export default function TasksApp() {
       if (activeTab === 'upcoming') {
         return t.dueDate && t.dueDate > todayStr
       }
+      if (activeTab === 'reminders') {
+        return Boolean(t.hasReminder || t.tag === 'Reminder' || t.reminderTime)
+      }
       return true
     })
   }, [tasks, activeTab, searchQuery, todayStr])
@@ -132,6 +145,10 @@ export default function TasksApp() {
   const todayCount = useMemo(
     () => tasks.filter(t => !t.completed && (!t.dueDate || t.dueDate <= todayStr)).length,
     [tasks, todayStr]
+  )
+  const remindersCount = useMemo(
+    () => tasks.filter(t => !t.completed && (t.hasReminder || t.tag === 'Reminder' || t.reminderTime)).length,
+    [tasks]
   )
 
   return (
@@ -154,33 +171,41 @@ export default function TasksApp() {
             {[
               { id: 'today', label: 'Today', count: todayCount },
               { id: 'upcoming', label: 'Upcoming' },
+              { id: 'reminders', label: 'Reminders', count: remindersCount, icon: Bell },
               { id: 'all', label: 'All Tasks', count: pendingCount },
               { id: 'completed', label: 'Completed' }
-            ].map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => {
-                  sounds.playClick()
-                  setActiveTab(tab.id as TaskFilterTab)
-                }}
-                className={`flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-medium transition ${
-                  activeTab === tab.id
-                    ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30'
-                    : 'bg-white/5 hover:bg-white/10 text-slate-400'
-                }`}
-              >
-                <span>{tab.label}</span>
-                {typeof tab.count === 'number' && tab.count > 0 && (
-                  <span
-                    className={`px-1.5 py-0.2 rounded-full text-[10px] ${
-                      activeTab === tab.id ? 'bg-black/30 text-white' : 'bg-white/10 text-slate-300'
-                    }`}
-                  >
-                    {tab.count}
-                  </span>
-                )}
-              </button>
-            ))}
+            ].map(tab => {
+              const TabIcon = tab.icon
+              const isActive = activeTab === tab.id
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => {
+                    sounds.playClick()
+                    setActiveTab(tab.id as TaskFilterTab)
+                  }}
+                  className={`flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-medium transition ${
+                    isActive
+                      ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30 font-semibold'
+                      : 'bg-white/5 hover:bg-white/10 text-slate-400'
+                  }`}
+                >
+                  {TabIcon && (
+                    <TabIcon className={`w-3.5 h-3.5 ${isActive ? 'text-amber-300' : 'text-slate-400'}`} />
+                  )}
+                  <span>{tab.label}</span>
+                  {typeof tab.count === 'number' && tab.count > 0 && (
+                    <span
+                      className={`px-1.5 py-0.2 rounded-full text-[10px] ${
+                        isActive ? 'bg-black/30 text-white' : 'bg-white/10 text-slate-300'
+                      }`}
+                    >
+                      {tab.count}
+                    </span>
+                  )}
+                </button>
+              )
+            })}
           </div>
 
           {/* Quick Search */}
@@ -305,17 +330,38 @@ export default function TasksApp() {
                           {task.title}
                         </span>
 
-                        {task.dueDate && (
-                          <span
-                            className={`text-[11px] flex items-center gap-1 mt-0.5 ${
-                              isOverdue ? 'text-rose-400 font-semibold' : 'text-slate-400'
-                            }`}
-                          >
-                            <Calendar className="w-3 h-3" />
-                            <span>{formatSmartDate(task.dueDate)}</span>
-                            {isOverdue && <span>• Overdue</span>}
-                          </span>
-                        )}
+                        <div className="flex items-center gap-2 flex-wrap mt-0.5">
+                          {task.dueDate && (
+                            <span
+                              className={`text-[11px] flex items-center gap-1 ${
+                                isOverdue ? 'text-rose-400 font-semibold' : 'text-slate-400'
+                              }`}
+                            >
+                              <Calendar className="w-3 h-3" />
+                              <span>{formatSmartDate(task.dueDate)}</span>
+                              {isOverdue && <span>• Overdue</span>}
+                            </span>
+                          )}
+
+                          {(task.hasReminder || task.reminderTime) && (
+                            <span className="text-[11px] flex items-center gap-1 text-amber-400 font-medium bg-amber-400/10 px-1.5 py-0.5 rounded-md">
+                              <Bell className="w-3 h-3" />
+                              <span>{task.reminderTime || 'Alert'}</span>
+                              {task.repeat && task.repeat !== 'none' && (
+                                <span className="text-[10px] text-amber-300 capitalize flex items-center gap-0.5">
+                                  <Repeat className="w-2.5 h-2.5" />
+                                  {task.repeat}
+                                </span>
+                              )}
+                            </span>
+                          )}
+
+                          {task.notes && (
+                            <span className="text-[11px] text-slate-400 truncate max-w-[200px]">
+                              • {task.notes}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
 
@@ -347,42 +393,89 @@ export default function TasksApp() {
                   {isExpanded && (
                     <div
                       onClick={e => e.stopPropagation()}
-                      className="mt-3 pt-3 border-t border-white/10 grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs"
+                      className="mt-3 pt-3 border-t border-white/10 space-y-2 text-xs"
                     >
-                      <div className="flex items-center justify-between sm:justify-start gap-2 bg-white/5 sm:bg-transparent p-2 sm:p-0 rounded-xl">
-                        <label className="text-slate-400 text-[11px]">Due Date:</label>
-                        <input
-                          type="date"
-                          value={task.dueDate || ''}
-                          onChange={e => updateTaskField(task.id, 'dueDate', e.target.value)}
-                          className="bg-black/30 border border-white/10 rounded-lg px-2 py-1 text-white text-xs focus:outline-none"
-                        />
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                        <div className="flex items-center justify-between sm:justify-start gap-2 bg-white/5 sm:bg-transparent p-2 sm:p-0 rounded-xl">
+                          <label className="text-slate-400 text-[11px]">Due Date:</label>
+                          <input
+                            type="date"
+                            value={task.dueDate || ''}
+                            onChange={e => updateTaskField(task.id, 'dueDate', e.target.value)}
+                            className="bg-black/30 border border-white/10 rounded-lg px-2 py-1 text-white text-xs focus:outline-none"
+                          />
+                        </div>
+
+                        <div className="flex items-center justify-between sm:justify-start gap-2 bg-white/5 sm:bg-transparent p-2 sm:p-0 rounded-xl">
+                          <label className="text-slate-400 text-[11px] flex items-center gap-1">
+                            <Bell className="w-3 h-3 text-amber-400" /> Reminder:
+                          </label>
+                          <input
+                            type="time"
+                            value={task.reminderTime || ''}
+                            onChange={e => {
+                              const val = e.target.value
+                              updateTaskField(task.id, 'reminderTime', val || undefined)
+                              updateTaskField(task.id, 'hasReminder', Boolean(val))
+                            }}
+                            className="bg-black/30 border border-white/10 rounded-lg px-2 py-1 text-white text-xs focus:outline-none"
+                          />
+                        </div>
+
+                        <div className="flex items-center justify-between sm:justify-start gap-2 bg-white/5 sm:bg-transparent p-2 sm:p-0 rounded-xl">
+                          <label className="text-slate-400 text-[11px]">Repeat:</label>
+                          <select
+                            value={task.repeat || 'none'}
+                            onChange={e =>
+                              updateTaskField(task.id, 'repeat', e.target.value as 'none' | 'daily' | 'weekly' | 'monthly')
+                            }
+                            className="bg-black/30 border border-white/10 rounded-lg px-2 py-1 text-white text-xs focus:outline-none"
+                          >
+                            <option value="none">None</option>
+                            <option value="daily">Daily</option>
+                            <option value="weekly">Weekly</option>
+                            <option value="monthly">Monthly</option>
+                          </select>
+                        </div>
                       </div>
 
-                      <div className="flex items-center justify-between sm:justify-start gap-2 bg-white/5 sm:bg-transparent p-2 sm:p-0 rounded-xl">
-                        <label className="text-slate-400 text-[11px]">Priority:</label>
-                        <select
-                          value={task.priority}
-                          onChange={e =>
-                            updateTaskField(task.id, 'priority', e.target.value as TaskPriority)
-                          }
-                          className="bg-black/30 border border-white/10 rounded-lg px-2 py-1 text-white text-xs focus:outline-none"
-                        >
-                          <option value="low">Low</option>
-                          <option value="medium">Medium</option>
-                          <option value="high">High</option>
-                        </select>
-                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                        <div className="flex items-center justify-between sm:justify-start gap-2 bg-white/5 sm:bg-transparent p-2 sm:p-0 rounded-xl">
+                          <label className="text-slate-400 text-[11px]">Priority:</label>
+                          <select
+                            value={task.priority}
+                            onChange={e =>
+                              updateTaskField(task.id, 'priority', e.target.value as TaskPriority)
+                            }
+                            className="bg-black/30 border border-white/10 rounded-lg px-2 py-1 text-white text-xs focus:outline-none"
+                          >
+                            <option value="low">Low</option>
+                            <option value="medium">Medium</option>
+                            <option value="high">High</option>
+                          </select>
+                        </div>
 
-                      <div className="flex items-center justify-between sm:justify-start gap-2 bg-white/5 sm:bg-transparent p-2 sm:p-0 rounded-xl">
-                        <label className="text-slate-400 text-[11px]">Category:</label>
-                        <input
-                          type="text"
-                          value={task.tag || ''}
-                          placeholder="e.g. Work, Personal"
-                          onChange={e => updateTaskField(task.id, 'tag', e.target.value)}
-                          className="bg-black/30 border border-white/10 rounded-lg px-2 py-1 text-white text-xs w-28 focus:outline-none"
-                        />
+                        <div className="flex items-center justify-between sm:justify-start gap-2 bg-white/5 sm:bg-transparent p-2 sm:p-0 rounded-xl">
+                          <label className="text-slate-400 text-[11px]">Category:</label>
+                          <input
+                            type="text"
+                            value={task.tag || ''}
+                            placeholder="e.g. Work, Personal"
+                            onChange={e => updateTaskField(task.id, 'tag', e.target.value)}
+                            className="bg-black/30 border border-white/10 rounded-lg px-2 py-1 text-white text-xs w-28 focus:outline-none"
+                          />
+                        </div>
+
+                        <div className="flex items-center justify-between sm:justify-start gap-2 bg-white/5 sm:bg-transparent p-2 sm:p-0 rounded-xl">
+                          <label className="text-slate-400 text-[11px]">Notes:</label>
+                          <input
+                            type="text"
+                            value={task.notes || ''}
+                            placeholder="Optional notes or alert info..."
+                            onChange={e => updateTaskField(task.id, 'notes', e.target.value)}
+                            className="bg-black/30 border border-white/10 rounded-lg px-2 py-1 text-white text-xs flex-1 focus:outline-none"
+                          />
+                        </div>
                       </div>
                     </div>
                   )}

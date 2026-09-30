@@ -162,6 +162,10 @@ export interface TaskItem {
   dueDate?: string
   tag?: string
   createdAt: number
+  reminderTime?: string // e.g. "14:30"
+  notes?: string
+  repeat?: 'none' | 'daily' | 'weekly' | 'monthly'
+  hasReminder?: boolean
 }
 
 export interface CalendarEvent {

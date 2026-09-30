@@ -7,11 +7,13 @@ import {
   Copy,
   Check,
   Calculator as CalcIcon,
-  Trash2
+  Trash2,
+  ArrowLeftRight
 } from 'lucide-react'
 import { sounds } from '@/utils/sound'
 import AppHeader from '@/components/AppWindow/AppHeader'
 import MobileBottomSheet from '@/components/Mobile/MobileBottomSheet'
+import ConverterApp from '@/apps/converter/ConverterApp'
 
 interface HistoryEntry {
   equation: string
@@ -19,7 +21,18 @@ interface HistoryEntry {
   timestamp: number
 }
 
-export default function CalculatorApp() {
+interface CalculatorAppProps {
+  initialMode?: 'calc' | 'convert'
+  initialFromCurrency?: string
+  initialToCurrency?: string
+}
+
+export default function CalculatorApp({
+  initialMode = 'calc',
+  initialFromCurrency,
+  initialToCurrency
+}: CalculatorAppProps = {}) {
+  const [activeMode, setActiveMode] = useState<'calc' | 'convert'>(initialMode)
   const [display, setDisplay] = useState('0')
   const [equation, setEquation] = useState('')
   const [waitingForOperand, setWaitingForOperand] = useState(false)
@@ -245,6 +258,17 @@ export default function CalculatorApp() {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [handleDigit, handleDecimal, handleOperator, calculate, handleBackspace, handleClear])
 
+  if (activeMode === 'convert') {
+    return (
+      <ConverterApp
+        initialFromCurrency={initialFromCurrency}
+        initialToCurrency={initialToCurrency}
+        isEmbedded={true}
+        onSwitchToCalc={() => setActiveMode('calc')}
+      />
+    )
+  }
+
   return (
     <div className="flex h-full w-full flex-col bg-slate-950/90 text-white select-none overflow-hidden">
       {/* Standardized App Header */}
@@ -264,7 +288,24 @@ export default function CalculatorApp() {
           icon: Sparkles,
           onClick: () => setShowScientific(!showScientific)
         }}
-      />
+      >
+        <div className="flex items-center p-0.5 rounded-xl bg-white/10 border border-white/10 shrink-0">
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-amber-500 text-white shadow-sm">
+            <CalcIcon className="w-3.5 h-3.5" />
+            <span>Calculate</span>
+          </div>
+          <button
+            onClick={() => {
+              sounds.playClick()
+              setActiveMode('convert')
+            }}
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium text-slate-300 hover:text-white transition"
+          >
+            <ArrowLeftRight className="w-3.5 h-3.5 text-cyan-400" />
+            <span>Convert</span>
+          </button>
+        </div>
+      </AppHeader>
 
       <div className="flex-1 flex flex-col md:flex-row overflow-hidden relative">
         {/* Main Calculator Pad */}

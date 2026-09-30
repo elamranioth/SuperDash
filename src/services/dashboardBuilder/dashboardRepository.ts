@@ -254,6 +254,79 @@ export const INITIAL_DASHBOARDS_SEED: DashboardDefinition[] = [
     isDefault: false,
     createdAt: Date.now() - 86400000 * 10,
     updatedAt: Date.now()
+  },
+  {
+    id: 'dash-morning',
+    name: 'Morning Briefing',
+    description: 'Daily executive glance with today schedule, priorities, tasks, and markets',
+    icon: 'Sunrise',
+    wallpaper: 'sunset',
+    wallpaperCategory: 'gradient',
+    layoutConfig: {
+      ...DEFAULT_LAYOUT_CONFIG,
+      showMarketsStrip: true,
+      showAppLauncher: true
+    },
+    items: [
+      {
+        id: 'mrn-item-1',
+        dashboardId: 'dash-morning',
+        widgetId: 'calendar',
+        x: 0,
+        y: 0,
+        width: 6,
+        height: 1,
+        size: 'md',
+        visibility: { desktop: true, tablet: true, mobile: true }
+      },
+      {
+        id: 'mrn-item-2',
+        dashboardId: 'dash-morning',
+        widgetId: 'tasks',
+        x: 6,
+        y: 0,
+        width: 6,
+        height: 1,
+        size: 'md',
+        visibility: { desktop: true, tablet: true, mobile: true }
+      },
+      {
+        id: 'mrn-item-3',
+        dashboardId: 'dash-morning',
+        widgetId: 'weather',
+        x: 0,
+        y: 1,
+        width: 4,
+        height: 1,
+        size: 'sm',
+        visibility: { desktop: true, tablet: true, mobile: true }
+      },
+      {
+        id: 'mrn-item-4',
+        dashboardId: 'dash-morning',
+        widgetId: 'hearings',
+        x: 4,
+        y: 1,
+        width: 4,
+        height: 1,
+        size: 'sm',
+        visibility: { desktop: true, tablet: true, mobile: true }
+      },
+      {
+        id: 'mrn-item-5',
+        dashboardId: 'dash-morning',
+        widgetId: 'finance',
+        x: 8,
+        y: 1,
+        width: 4,
+        height: 1,
+        size: 'sm',
+        visibility: { desktop: true, tablet: true, mobile: true }
+      }
+    ],
+    isDefault: false,
+    createdAt: Date.now() - 86400000 * 5,
+    updatedAt: Date.now()
   }
 ]
 

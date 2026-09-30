@@ -328,7 +328,7 @@ export default function GlobalSearchModal({
             badge: rem.completed ? 'Done' : 'Alert',
             action: () => {
               sounds.playClick()
-              onOpenApp('reminders')
+              onOpenApp('tasks', { initialFilter: 'reminders' })
               onClose()
             }
           })

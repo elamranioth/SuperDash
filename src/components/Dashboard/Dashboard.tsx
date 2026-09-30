@@ -95,10 +95,33 @@ export default function Dashboard() {
   // Open App handler
   const handleOpenApp = useCallback((appId: string, customProps?: Record<string, unknown>) => {
     sounds.playClick()
-    if (appId === 'updates') {
+    // Backward-compatibility and consolidated redirection
+    if (appId === 'converter') {
+      appId = 'calculator'
+      customProps = { ...(customProps || {}), initialMode: 'convert' }
+    } else if (appId === 'reminders') {
+      appId = 'tasks'
+      customProps = { ...(customProps || {}), initialFilter: 'reminders' }
+    } else if (appId === 'timer') {
+      appId = 'time'
+      customProps = { ...(customProps || {}), initialMode: 'timer' }
+    } else if (appId === 'focus') {
+      appId = 'time'
+      customProps = { ...(customProps || {}), initialMode: 'focus' }
+    } else if (appId === 'worldclock') {
+      appId = 'time'
+      customProps = { ...(customProps || {}), initialMode: 'world' }
+    } else if (appId === 'updates') {
       appId = 'settings'
       customProps = { ...(customProps || {}), initialTab: 'updates' }
+    } else if (appId === 'dashboardbuilder') {
+      appId = 'settings'
+      customProps = { ...(customProps || {}), initialTab: 'dashboard' }
+    } else if (appId === 'morning') {
+      dashboardRepository.setActiveDashboard('dash-morning').catch(() => {})
+      return
     }
+
     recentAppsService.recordAppLaunch(appId)
     setOpenAppIds(prev => (prev.includes(appId) ? prev : [...prev, appId]))
     setMinimizedAppIds(prev => prev.filter(id => id !== appId))
@@ -137,7 +160,7 @@ export default function Dashboard() {
 
   // Open Converter with preselected currencies
   const handleOpenConverterWithPair = useCallback((from: string, to: string) => {
-    handleOpenApp('converter', { initialFromCurrency: from, initialToCurrency: to })
+    handleOpenApp('calculator', { initialMode: 'convert', initialFromCurrency: from, initialToCurrency: to })
   }, [handleOpenApp])
 
   // Global listener for cross-app opening
