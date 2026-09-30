@@ -30,7 +30,7 @@ jobs:
           cache: 'gradle'
 
       - name: Install Node Dependencies
-        run: npm ci
+        run: npm install
 
       - name: Build Web Application
         env:
