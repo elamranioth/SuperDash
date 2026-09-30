@@ -40,7 +40,7 @@ SuperDash 1.5 introduces an architectural mobile redesign:
 ### Local Development
 ```bash
 # 1. Clone the repository
-git clone https://github.com/omran/SuperDash.git
+git clone https://github.com/elamranioth/SuperDash.git
 cd SuperDash
 
 # 2. Install dependencies
@@ -61,10 +61,7 @@ SuperDash is pre-configured with a complete automated GitHub Pages workflow:
 
 1. **Push your code to GitHub**:
    ```bash
-   git init
-   git add .
-   git commit -m "feat: SuperDash 1.5 mobile redesign and updates system"
-   git remote add origin https://github.com/<your-username>/SuperDash.git
+   git remote add origin https://github.com/elamranioth/SuperDash.git
    git branch -M main
    git push -u origin main
    ```
@@ -76,7 +73,7 @@ SuperDash is pre-configured with a complete automated GitHub Pages workflow:
 
 3. **Automatic Deployment**:
    - Every push to `main` automatically triggers `.github/workflows/deploy.yml`.
-   - The workflow runs `npm run build` with relative base assets and publishes directly to `https://<your-username>.github.io/SuperDash/`.
+   - The workflow runs `npm run build` with relative base assets and publishes directly to `https://elamranioth.github.io/SuperDash/`.
 
 ---
 

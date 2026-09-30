@@ -4,8 +4,8 @@
   "title": "SuperDash 1.5 — Android & Mobile Experience Overhaul",
   "summary": "Full mobile responsiveness redesign across all 21 applications, seamless touch navigation, bottom sheet drawers, safe-area layout insets, and the brand-new Updates center.",
   "minAppVersion": "1.0.0",
-  "downloadUrl": "https://github.com/omran/SuperDash/releases/latest",
-  "apkDownloadUrl": "https://github.com/omran/SuperDash/releases/latest/download/SuperDash.apk",
+  "downloadUrl": "https://github.com/elamranioth/SuperDash/releases/latest",
+  "apkDownloadUrl": "https://github.com/elamranioth/SuperDash/releases/latest/download/SuperDash.apk",
   "highlights": [
     "Complete Mobile Responsive Redesign for all 21 applications",
     "Liquid Glass Bottom Sheet drawers for mobile phones",
