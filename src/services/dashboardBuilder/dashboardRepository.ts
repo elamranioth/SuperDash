@@ -18,7 +18,7 @@ export const DEFAULT_LAYOUT_CONFIG: DashboardLayoutConfig = {
   showClock: false,
   clockPosition: 'center',
   clockFormat: '12h',
-  showMarketsStrip: true,
+  showMarketsStrip: false,
   showAppLauncher: true,
   appLauncherColumns: 4,
   gridColumns: 12,

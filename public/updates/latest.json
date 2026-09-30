@@ -1,138 +1,60 @@
 {
-  "version": "1.5.0",
+  "version": "1.6.0",
   "releaseDate": "2026-09-30",
-  "title": "SuperDash 1.5 — Android & Mobile Experience Overhaul",
-  "summary": "Full mobile responsiveness redesign across all 21 applications, seamless touch navigation, bottom sheet drawers, safe-area layout insets, and the brand-new Updates center.",
+  "title": "SuperDash 1.6 — Mobile Minimalism, Premium Icons & Quick Controls",
+  "summary": "Refined mobile home screen with Liquid Glass Quick Controls bottom sheet, pristine 4-column app launcher, brand-new OS-grade squircle icons, zero-clutter layout, and real in-app APK streaming downloads.",
   "minAppVersion": "1.0.0",
   "downloadUrl": "https://github.com/elamranioth/SuperDash/releases/latest",
   "apkDownloadUrl": "https://github.com/elamranioth/SuperDash/releases/latest/download/SuperDash.apk",
   "highlights": [
-    "Complete Mobile Responsive Redesign for all 21 applications",
-    "Liquid Glass Bottom Sheet drawers for mobile phones",
-    "Clean Home greeting with decorative top clock removed",
-    "Brand new Updates mini-app with per-app changelogs and release history",
-    "Full Capacitor Android compatibility and GitHub Actions deployment"
+    "Native Liquid Glass Quick Controls Bottom Sheet from mobile header",
+    "Clean Minimalist Home: removed markets strip and cluttered category rail",
+    "Original SuperDash OS-grade squircle icons with directional lighting and specular bevels",
+    "Evenly spaced 4-column responsive app launcher grid",
+    "In-App update download engine with live byte progress tracking and APK install intent"
   ],
   "changes": [
     {
-      "appId": "updates",
-      "appName": "Updates",
-      "type": "NEW",
-      "description": "Brand new Updates mini-app for checking live releases, reading detailed changelogs, and managing updates."
+      "appId": "home",
+      "appName": "Home Screen",
+      "type": "IMPROVED",
+      "description": "Simplified Home composition: compact header, universal search, clean APPLICATIONS heading, and 4-column grid. Markets and categories removed."
     },
     {
-      "appId": "dashboardbuilder",
-      "appName": "Dashboard Builder",
+      "appId": "controlcenter",
+      "appName": "Quick Controls",
       "type": "IMPROVED",
-      "description": "Redesigned mobile experience with slide-over drawers for Widget Library and Settings panel, and mobile device simulation."
+      "description": "Header sliders button now opens a native Liquid Glass Bottom Sheet without shifting or expanding the header, with theme, edit mode, alerts, and settings."
     },
     {
-      "appId": "notes",
-      "appName": "Notes",
+      "appId": "launcher",
+      "appName": "App Launcher",
       "type": "IMPROVED",
-      "description": "Implemented list-first mobile navigation: tapping a note opens the full editor with a back button instead of squashed columns."
+      "description": "Bespoke squircle icons for all 15 core apps with 22% curvature, inner specular glow, drop shadow, and clean typography."
+    },
+    {
+      "appId": "time",
+      "appName": "Time",
+      "type": "IMPROVED",
+      "description": "Unified Time app with Liquid Glass hourglass timer, Pomodoro focus goals, and global world clock timezones."
     },
     {
       "appId": "calculator",
       "appName": "Calculator",
       "type": "IMPROVED",
-      "description": "History tape converted to a native mobile bottom sheet with responsive keypad layout."
-    },
-    {
-      "appId": "converter",
-      "appName": "Converter",
-      "type": "IMPROVED",
-      "description": "Fluid base currency inputs, touch-visible controls, and mobile bottom sheet currency selector."
-    },
-    {
-      "appId": "calendar",
-      "appName": "Calendar",
-      "type": "IMPROVED",
-      "description": "Bottom sheet event creator on mobile screens and touch-accessible event deletion."
-    },
-    {
-      "appId": "reminders",
-      "appName": "Reminders",
-      "type": "IMPROVED",
-      "description": "Mobile bottom sheet for reminder creation and persistent touch action buttons."
-    },
-    {
-      "appId": "worldclock",
-      "appName": "World Clock",
-      "type": "IMPROVED",
-      "description": "Fluid responsive cards, mobile bottom sheet city picker, and touch-visible remove controls."
-    },
-    {
-      "appId": "timer",
-      "appName": "Timer",
-      "type": "IMPROVED",
-      "description": "Preset sidebar drawer refactored into a bottom sheet on mobile screens with responsive layout."
-    },
-    {
-      "appId": "weather",
-      "appName": "Weather",
-      "type": "IMPROVED",
-      "description": "Header search and units wrap-safe layout with fluid temperature typography and horizontal hourly forecast."
+      "description": "Merged standard math and multi-currency exchange converter into a single streamlined utility."
     },
     {
       "appId": "tasks",
       "appName": "Tasks",
       "type": "IMPROVED",
-      "description": "Responsive quick-add task form with priority toggle and touch-visible task controls."
+      "description": "Integrated timed alarms, reminders, and daily checklists in one clean view."
     },
     {
-      "appId": "focus",
-      "appName": "Focus",
+      "appId": "updates",
+      "appName": "Updates",
       "type": "IMPROVED",
-      "description": "Session duration preset selector refactored into a responsive grid with no text clipping."
-    },
-    {
-      "appId": "files",
-      "appName": "Files",
-      "type": "IMPROVED",
-      "description": "Added horizontal category navigation rail for phone screens."
-    },
-    {
-      "appId": "finance",
-      "appName": "Finance",
-      "type": "IMPROVED",
-      "description": "Reflowed tab navigation and mobile-first card list views for transactions and assets."
-    },
-    {
-      "appId": "hearings",
-      "appName": "Hearings",
-      "type": "IMPROVED",
-      "description": "Responsive 2x2 KPI metrics grid and mobile list card reflow."
-    },
-    {
-      "appId": "reader",
-      "appName": "Reader",
-      "type": "IMPROVED",
-      "description": "Full-screen annotations drawer on mobile to protect reading canvas width."
-    },
-    {
-      "appId": "live",
-      "appName": "Live",
-      "type": "IMPROVED",
-      "description": "Mobile-optimized world switcher tabs and touch-friendly calm atmosphere."
-    },
-    {
-      "appId": "collections",
-      "appName": "Collections",
-      "type": "IMPROVED",
-      "description": "Reflowed collection cards into responsive 1-column mobile grid."
-    },
-    {
-      "appId": "settings",
-      "appName": "Settings",
-      "type": "IMPROVED",
-      "description": "Horizontal scrollable navigation rail on phones and full-width settings sections."
-    },
-    {
-      "appId": "home",
-      "appName": "Home Dashboard",
-      "type": "FIXED",
-      "description": "Removed duplicate decorative clock at the top of the dashboard for a clean greeting."
+      "description": "Live byte-level download progress bar and direct APK package installation from Settings."
     }
   ]
 }

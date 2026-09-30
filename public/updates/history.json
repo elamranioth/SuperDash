@@ -1,5 +1,18 @@
 [
   {
+    "version": "1.6.0",
+    "releaseDate": "2026-09-30",
+    "title": "SuperDash 1.6 — Mobile Minimalism, Premium Icons & Quick Controls",
+    "summary": "Refined mobile home screen with Liquid Glass Quick Controls bottom sheet, pristine 4-column app launcher, brand-new OS-grade squircle icons, zero-clutter layout, and real in-app APK streaming downloads.",
+    "highlights": [
+      "Native Liquid Glass Quick Controls Bottom Sheet from mobile header",
+      "Clean Minimalist Home: removed markets strip and cluttered category rail",
+      "Original SuperDash OS-grade squircle icons with directional lighting and specular bevels",
+      "Evenly spaced 4-column responsive app launcher grid",
+      "In-App update download engine with live byte progress tracking and APK install intent"
+    ]
+  },
+  {
     "version": "1.5.0",
     "releaseDate": "2026-09-30",
     "title": "SuperDash 1.5 — Android & Mobile Experience Overhaul",

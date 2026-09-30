@@ -1,4 +1,4 @@
-export const SUPERDASH_VERSION = '1.5.0'
+export const SUPERDASH_VERSION = '1.6.0'
 export const SUPERDASH_BUILD_DATE = '2026-09-30'
 export const SUPERDASH_CHANNEL = 'stable'
 export const SUPERDASH_GITHUB_REPO = 'elamranioth/SuperDash'

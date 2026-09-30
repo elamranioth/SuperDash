@@ -99,6 +99,46 @@ export class UpdateService {
   }
 
   /**
+   * Download APK with real progress callbacks
+   */
+  async downloadApkWithProgress(
+    url: string,
+    onProgress: (loaded: number, total: number, percentage: number) => void
+  ): Promise<Blob> {
+    const response = await fetch(url)
+    if (!response.ok) {
+      throw new Error(`Download failed: server returned status ${response.status}`)
+    }
+
+    const contentLength = response.headers.get('content-length')
+    const total = contentLength ? parseInt(contentLength, 10) : 0
+
+    if (!response.body) {
+      const blob = await response.blob()
+      onProgress(blob.size, blob.size, 100)
+      return blob
+    }
+
+    const reader = response.body.getReader()
+    const chunks: BlobPart[] = []
+    let loaded = 0
+
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+      if (value) {
+        chunks.push(value)
+        loaded += value.length
+        const pct = total > 0 ? Math.min(100, Math.round((loaded / total) * 100)) : 50
+        onProgress(loaded, total || loaded, pct)
+      }
+    }
+
+    onProgress(loaded, total || loaded, 100)
+    return new Blob(chunks, { type: 'application/vnd.android.package-archive' })
+  }
+
+  /**
    * Trigger Service Worker update if in PWA/Web environment
    */
   async triggerPwaUpdate(): Promise<boolean> {

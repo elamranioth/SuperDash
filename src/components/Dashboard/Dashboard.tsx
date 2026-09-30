@@ -407,37 +407,25 @@ export default function Dashboard() {
 
       {/* Main Workspace Scrollable Container */}
       <main className="flex-1 overflow-y-auto overflow-x-hidden px-2.5 sm:px-6 md:px-8 py-3 sm:py-6 md:py-8 flex flex-col items-center max-w-7xl mx-auto w-full max-w-full">
-        {/* Top Hero Section: Clean composition of Universal Search and Compact Market Strip */}
+        {/* Top Hero Section: Clean composition of Universal Search */}
         {((!activeDashboard || activeDashboard.layoutConfig.showSearch) ||
-          (activeDashboard?.layoutConfig.showClock) ||
-          (!activeDashboard || activeDashboard.layoutConfig.showMarketsStrip)) && (
-          <div className="w-full flex flex-col items-center max-w-4xl mx-auto mb-5 sm:mb-7">
+          (activeDashboard?.layoutConfig.showClock)) && (
+          <div className="w-full flex flex-col items-center max-w-4xl mx-auto mb-4 sm:mb-6">
             {/* 1. Universal Search Bar */}
             {(!activeDashboard || activeDashboard.layoutConfig.showSearch) && (
-              <div className="w-full flex justify-center order-1 mb-4 sm:mb-5">
+              <div className="w-full flex justify-center order-1 mb-2 sm:mb-3">
                 <GlobalSearchBar onOpen={() => setIsSearchOpen(true)} />
               </div>
             )}
 
             {/* 2. Optional Wallpaper Clock & Date (Hidden by default on Home) */}
             {activeDashboard?.layoutConfig.showClock && (
-              <div className="w-full flex justify-center order-2 mb-4 sm:mb-5">
+              <div className="w-full flex justify-center order-2 mb-2 sm:mb-3">
                 <DateTimeWidget
                   variant="background"
                   format={activeDashboard?.layoutConfig.clockFormat || settings.clockFormat}
                   showSeconds={settings.showSeconds}
                   onClick={() => handleOpenApp('calendar')}
-                />
-              </div>
-            )}
-
-            {/* 3. Compact Liquid Glass Market Strip */}
-            {(!activeDashboard || activeDashboard.layoutConfig.showMarketsStrip) && (
-              <div className="w-full flex justify-center order-3 mb-1">
-                <MarketsWidget
-                  variant="strip"
-                  onOpenConverter={handleOpenConverterWithPair}
-                  onOpenApp={handleOpenApp}
                 />
               </div>
             )}
@@ -737,6 +725,8 @@ export default function Dashboard() {
         settings={settings}
         onUpdateSettings={handleUpdateSettings}
         onOpenApp={handleOpenApp}
+        isEditMode={isEditMode}
+        onToggleEditMode={() => setIsEditMode(!isEditMode)}
       />
 
       {/* Add Widget Modal in Edit Mode */}

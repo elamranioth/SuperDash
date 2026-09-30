@@ -12,7 +12,9 @@ import {
   Globe,
   Tag,
   Check,
-  AlertCircle
+  AlertCircle,
+  ArrowDownCircle,
+  FileCheck
 } from 'lucide-react'
 import {
   updateService,
@@ -33,6 +35,12 @@ interface UpdatesAppProps {
   isEmbedded?: boolean
 }
 
+interface DownloadProgress {
+  loaded: number
+  total: number
+  percentage: number
+}
+
 export default function UpdatesApp({ onOpenApp, isEmbedded = false }: UpdatesAppProps) {
   const [loading, setLoading] = useState<boolean>(true)
   const [checking, setChecking] = useState<boolean>(false)
@@ -44,6 +52,11 @@ export default function UpdatesApp({ onOpenApp, isEmbedded = false }: UpdatesApp
   const [filterType, setFilterType] = useState<ChangeType | 'ALL'>('ALL')
   const [searchQuery, setSearchQuery] = useState<string>('')
   const [statusFeedback, setStatusFeedback] = useState<string | null>(null)
+
+  // Download & Install State
+  const [downloadState, setDownloadState] = useState<'idle' | 'downloading' | 'completed' | 'error'>('idle')
+  const [downloadProgress, setDownloadProgress] = useState<DownloadProgress>({ loaded: 0, total: 0, percentage: 0 })
+  const [downloadBlobUrl, setDownloadBlobUrl] = useState<string | null>(null)
 
   const platform = useMemo(() => getAppPlatform(), [])
 
@@ -60,7 +73,6 @@ export default function UpdatesApp({ onOpenApp, isEmbedded = false }: UpdatesApp
         setIsUpdateAvail(res.updateAvailable)
         if (res.error) setErrorMsg(res.error)
         setLoading(false)
-        // Mark as viewed
         updateService.markUpdatesAsViewed(SUPERDASH_VERSION)
       }
     }
@@ -96,6 +108,41 @@ export default function UpdatesApp({ onOpenApp, isEmbedded = false }: UpdatesApp
     setTimeout(() => {
       setStatusFeedback(null)
     }, 4000)
+  }
+
+  // Real In-App APK Download with Progress
+  const handleStartDownload = async () => {
+    if (!release?.apkDownloadUrl) return
+    sounds.playClick()
+    setDownloadState('downloading')
+    setErrorMsg(null)
+    setDownloadProgress({ loaded: 0, total: 0, percentage: 0 })
+
+    try {
+      const blob = await updateService.downloadApkWithProgress(
+        release.apkDownloadUrl,
+        (loaded, total, percentage) => {
+          setDownloadProgress({ loaded, total, percentage })
+        }
+      )
+
+      sounds.playSuccess()
+      const url = URL.createObjectURL(blob)
+      setDownloadBlobUrl(url)
+      setDownloadState('completed')
+
+      // Trigger native download
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `SuperDash-v${release.version}.apk`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+    } catch (err: unknown) {
+      setDownloadState('error')
+      const msg = err instanceof Error ? err.message : 'Download failed'
+      setErrorMsg(`Download error: ${msg}. Tap to retry or use direct download link.`)
+    }
   }
 
   // Filtered changes
@@ -173,18 +220,72 @@ export default function UpdatesApp({ onOpenApp, isEmbedded = false }: UpdatesApp
               <span>{checking ? 'Checking...' : 'Check for Updates'}</span>
             </button>
 
-            {platform === 'android' && release?.apkDownloadUrl && (
-              <a
-                href={release.apkDownloadUrl}
-                download
-                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 text-white text-xs font-semibold transition"
+            {platform === 'android' && release?.apkDownloadUrl && downloadState === 'idle' && (
+              <button
+                onClick={handleStartDownload}
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shadow-md transition"
               >
-                <DownloadCloud className="w-3.5 h-3.5 text-emerald-400" />
-                <span className="hidden sm:inline">Download APK</span>
-              </a>
+                <DownloadCloud className="w-3.5 h-3.5" />
+                <span>Download APK</span>
+              </button>
             )}
           </div>
         </div>
+
+        {/* Live Download Progress Card */}
+        {downloadState === 'downloading' && (
+          <div className="mt-4 p-4 rounded-2xl bg-black/50 border border-indigo-500/30 space-y-2">
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-semibold text-white flex items-center gap-2">
+                <ArrowDownCircle className="w-4 h-4 text-indigo-400 animate-bounce" />
+                Downloading SuperDash v{release?.version || '1.6.0'}...
+              </span>
+              <span className="font-mono text-indigo-300 font-bold">
+                {downloadProgress.percentage}%
+              </span>
+            </div>
+
+            <div className="w-full bg-white/10 rounded-full h-2 overflow-hidden">
+              <div
+                className="bg-gradient-to-r from-indigo-500 to-emerald-400 h-full rounded-full transition-all duration-200"
+                style={{ width: `${downloadProgress.percentage}%` }}
+              />
+            </div>
+
+            <div className="flex items-center justify-between text-[11px] text-slate-400 font-mono">
+              <span>
+                {(downloadProgress.loaded / 1024 / 1024).toFixed(1)} MB
+                {downloadProgress.total > 0 && ` / ${(downloadProgress.total / 1024 / 1024).toFixed(1)} MB`}
+              </span>
+              <span>Keep app open during download</span>
+            </div>
+          </div>
+        )}
+
+        {/* Download Completed Card */}
+        {downloadState === 'completed' && (
+          <div className="mt-4 p-4 rounded-2xl bg-emerald-950/40 border border-emerald-500/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <FileCheck className="w-6 h-6 text-emerald-400 shrink-0" />
+              <div>
+                <div className="text-xs font-bold text-white">APK Download Complete!</div>
+                <div className="text-[11px] text-slate-300">
+                  Tap "Open Package" or tap the notification to install over existing app without losing your data.
+                </div>
+              </div>
+            </div>
+
+            {downloadBlobUrl && (
+              <a
+                href={downloadBlobUrl}
+                download={`SuperDash-v${release?.version || '1.6.0'}.apk`}
+                className="self-start sm:self-center px-3.5 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs shadow-md transition"
+              >
+                Install Update
+              </a>
+            )}
+          </div>
+        )}
 
         {/* Feedback pill */}
         {statusFeedback && (

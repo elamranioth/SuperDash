@@ -92,7 +92,6 @@ export default function TopMenuBar({
     day: 'numeric'
   })
 
-  const [isMobileActionsOpen, setIsMobileActionsOpen] = useState(false)
 
   return (
     <header className="min-h-[44px] md:h-9 px-3 sm:px-4 flex items-center justify-between text-xs select-none bg-black/50 backdrop-blur-xl border-b border-white/10 text-slate-300 z-30 relative shadow-sm pt-[env(safe-area-inset-top,0px)]">
@@ -227,10 +226,10 @@ export default function TopMenuBar({
         <button
           onClick={() => {
             sounds.playClick()
-            setIsMobileActionsOpen(true)
+            onOpenControlCenter()
           }}
           className="p-2 rounded-xl text-slate-300 hover:text-white active:bg-white/10 transition touch-manipulation"
-          title="Options"
+          title="Quick Controls"
         >
           <SlidersHorizontal className="w-4 h-4 text-slate-200" />
         </button>
@@ -356,146 +355,6 @@ export default function TopMenuBar({
         </div>
       </div>
 
-      {/* Mobile Action Bottom Sheet */}
-      {isMobileActionsOpen && (
-        <div
-          onClick={() => setIsMobileActionsOpen(false)}
-          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-end justify-center select-none"
-        >
-          <div
-            onClick={e => e.stopPropagation()}
-            className="w-full max-w-lg liquid-glass-heavy rounded-t-3xl border-t border-x border-white/20 p-5 shadow-2xl space-y-4 animate-bottom-sheet max-h-[85vh] overflow-y-auto pb-[max(1.5rem,env(safe-area-inset-bottom,0px))]"
-          >
-            {/* Grab Handle */}
-            <div className="w-12 h-1.5 rounded-full bg-white/20 mx-auto -mt-1 mb-2" />
-
-            <div className="flex items-center justify-between pb-3 border-b border-white/10">
-              <div className="flex items-center gap-2">
-                <div className="w-5 h-5 rounded-md bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-[10px] text-white font-black">
-                  S
-                </div>
-                <span className="font-bold text-sm text-white">SuperDash Controls</span>
-              </div>
-              <button
-                onClick={() => setIsMobileActionsOpen(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-white"
-              >
-                ✕
-              </button>
-            </div>
-
-            {/* Quick Actions Grid */}
-            <div className="grid grid-cols-2 gap-2.5">
-              {/* Theme Toggle */}
-              <button
-                onClick={() => {
-                  onToggleTheme()
-                  setIsMobileActionsOpen(false)
-                }}
-                className="p-3 rounded-2xl liquid-glass flex items-center gap-3 text-left hover:bg-white/10 active:scale-98 transition"
-              >
-                {theme === 'light' ? (
-                  <Sun className="w-5 h-5 text-amber-400 shrink-0" />
-                ) : (
-                  <Moon className="w-5 h-5 text-indigo-400 shrink-0" />
-                )}
-                <div>
-                  <div className="text-xs font-semibold text-white capitalize">{theme} Mode</div>
-                  <div className="text-[10px] text-slate-400">Tap to toggle</div>
-                </div>
-              </button>
-
-              {/* Control Center */}
-              <button
-                onClick={() => {
-                  setIsMobileActionsOpen(false)
-                  onOpenControlCenter()
-                }}
-                className="p-3 rounded-2xl liquid-glass flex items-center gap-3 text-left hover:bg-white/10 active:scale-98 transition"
-              >
-                <SlidersHorizontal className="w-5 h-5 text-indigo-400 shrink-0" />
-                <div>
-                  <div className="text-xs font-semibold text-white">Control Center</div>
-                  <div className="text-[10px] text-slate-400">Glass & sliders</div>
-                </div>
-              </button>
-
-              {/* Edit Mode Toggle */}
-              <button
-                onClick={() => {
-                  onToggleEditMode()
-                  setIsMobileActionsOpen(false)
-                }}
-                className={`p-3 rounded-2xl border flex items-center gap-3 text-left active:scale-98 transition ${
-                  isEditMode
-                    ? 'bg-amber-500/20 border-amber-400/50 text-amber-200'
-                    : 'liquid-glass hover:bg-white/10 text-white'
-                }`}
-              >
-                <PencilRuler className="w-5 h-5 text-amber-400 shrink-0" />
-                <div>
-                  <div className="text-xs font-semibold text-white">
-                    {isEditMode ? 'Done Editing' : 'Edit Widgets'}
-                  </div>
-                  <div className="text-[10px] text-slate-400">
-                    {isEditMode ? 'Exit edit mode' : 'Rearrange & add'}
-                  </div>
-                </div>
-              </button>
-
-              {/* Dashboard Builder */}
-              <button
-                onClick={() => {
-                  setIsMobileActionsOpen(false)
-                  onOpenApp('dashboardbuilder')
-                }}
-                className="p-3 rounded-2xl liquid-glass flex items-center gap-3 text-left hover:bg-white/10 active:scale-98 transition"
-              >
-                <Plus className="w-5 h-5 text-emerald-400 shrink-0" />
-                <div>
-                  <div className="text-xs font-semibold text-white">Builder</div>
-                  <div className="text-[10px] text-slate-400">Layout editor</div>
-                </div>
-              </button>
-            </div>
-
-            {/* Links List */}
-            <div className="space-y-1 pt-2 border-t border-white/10">
-              <button
-                onClick={() => {
-                  setIsMobileActionsOpen(false)
-                  onOpenReminders()
-                }}
-                className="w-full p-2.5 rounded-xl hover:bg-white/10 flex items-center justify-between text-slate-200 transition"
-              >
-                <div className="flex items-center gap-2.5">
-                  <Bell className="w-4 h-4 text-rose-400" />
-                  <span className="text-xs font-medium">Reminders & Notifications</span>
-                </div>
-                {unreadCount > 0 && (
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500 text-white">
-                    {unreadCount}
-                  </span>
-                )}
-              </button>
-
-              <button
-                onClick={() => {
-                  setIsMobileActionsOpen(false)
-                  onOpenApp('settings')
-                }}
-                className="w-full p-2.5 rounded-xl hover:bg-white/10 flex items-center justify-between text-slate-200 transition"
-              >
-                <div className="flex items-center gap-2.5">
-                  <Sliders className="w-4 h-4 text-slate-400" />
-                  <span className="text-xs font-medium">System Settings & Backups</span>
-                </div>
-                <span className="text-slate-500 text-xs">›</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </header>
   )
 }
