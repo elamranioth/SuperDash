@@ -337,6 +337,32 @@ export default function AppIcon({ appId, className = '', size = 'md' }: AppIconP
           </div>
         )
 
+      // 16. GROWTH — Deep Teal / Emerald — Connected path with spark
+      case 'growth':
+        return (
+          <div className="relative w-full h-full bg-gradient-to-br from-teal-500 via-teal-600 to-emerald-700 flex items-center justify-center overflow-hidden">
+            {/* Top-left directional light */}
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,_rgba(255,255,255,0.32)_0%,_transparent_65%)]" />
+            {/* SVG: ascending path of connected nodes ending in a spark */}
+            <svg viewBox="0 0 44 44" className="relative w-[62%] h-[62%]" fill="none">
+              {/* Connection lines */}
+              <line x1="8" y1="34" x2="17" y2="24" stroke="white" strokeWidth="1.8" strokeOpacity="0.45" strokeLinecap="round"/>
+              <line x1="17" y1="24" x2="27" y2="18" stroke="white" strokeWidth="1.8" strokeOpacity="0.55" strokeLinecap="round"/>
+              <line x1="27" y1="18" x2="36" y2="10" stroke="white" strokeWidth="1.8" strokeOpacity="0.65" strokeLinecap="round"/>
+              {/* Nodes — ascending, each brighter */}
+              <circle cx="8" cy="34" r="3.2" fill="white" fillOpacity="0.35"/>
+              <circle cx="17" cy="24" r="3.2" fill="white" fillOpacity="0.55"/>
+              <circle cx="27" cy="18" r="3.2" fill="white" fillOpacity="0.75"/>
+              {/* Spark at top-right: small 4-point star */}
+              <circle cx="36" cy="10" r="3.8" fill="white" fillOpacity="0.95"/>
+              <line x1="36" y1="5.5" x2="36" y2="7.5" stroke="white" strokeWidth="1.5" strokeOpacity="0.9" strokeLinecap="round"/>
+              <line x1="36" y1="12.5" x2="36" y2="14.5" stroke="white" strokeWidth="1.5" strokeOpacity="0.9" strokeLinecap="round"/>
+              <line x1="31.5" y1="10" x2="33.5" y2="10" stroke="white" strokeWidth="1.5" strokeOpacity="0.9" strokeLinecap="round"/>
+              <line x1="38.5" y1="10" x2="40.5" y2="10" stroke="white" strokeWidth="1.5" strokeOpacity="0.9" strokeLinecap="round"/>
+            </svg>
+          </div>
+        )
+
       // Fallback
       default:
         return (

@@ -17,6 +17,7 @@ import {
 import { AppDefinition, AppCategory } from '@/types'
 import LiveIcon from '@/apps/live/LiveIcon'
 import CollectionIcon from '@/apps/collections/CollectionIcon'
+import GrowthIcon from '@/apps/growth/GrowthIcon'
 
 // Lazy-loaded application components for optimal code splitting & performance
 const CalculatorApp = lazy(() => import('@/apps/calculator/CalculatorApp'))
@@ -34,6 +35,7 @@ const DecisionBookApp = lazy(() => import('@/apps/decisionbook/DecisionBookApp')
 const ReaderApp = lazy(() => import('@/apps/reader/ReaderApp'))
 const LiveApp = lazy(() => import('@/apps/live/LiveApp'))
 const CollectionsApp = lazy(() => import('@/apps/collections/CollectionsApp'))
+const GrowthApp = lazy(() => import('@/apps/growth/GrowthApp'))
 
 export interface RegisteredApp extends AppDefinition {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -154,6 +156,17 @@ const APP_REGISTRY: RegisteredApp[] = [
     gradient: 'from-emerald-500 to-teal-700',
     component: FinanceApp,
     defaultWindowSize: { width: 1040, height: 700 }
+  },
+  {
+    id: 'growth',
+    name: 'Growth',
+    description: 'Get clients, follow up properly, stay remembered, build relationships, earn referrals',
+    icon: GrowthIcon,
+    category: 'business',
+    keywords: ['growth', 'leads', 'clients', 'marketing', 'referrals', 'follow up', 'pipeline', 'crm', 'prospects', 'retention', 'playbook', 'campaigns', 'business development'],
+    gradient: 'from-teal-500 to-emerald-600',
+    component: GrowthApp,
+    defaultWindowSize: { width: 920, height: 680 }
   },
 
   // --- UTILITIES ---

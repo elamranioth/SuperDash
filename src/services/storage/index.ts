@@ -206,6 +206,7 @@ export const DEFAULT_SETTINGS: DashboardSettings = {
     'live',
     'hearings',
     'finance',
+    'growth',
     'settings'
   ],
   glassOpacity: 75,
