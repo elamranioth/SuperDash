@@ -34,8 +34,9 @@ export interface HistoricalRelease {
 
 const LAST_VIEWED_VERSION_KEY = 'superdash_last_viewed_update_version'
 
+export const LIVE_RAW_MANIFEST_URL = 'https://raw.githubusercontent.com/elamranioth/SuperDash/gh-pages/updates/latest.json'
 export const LIVE_MANIFEST_URL = 'https://elamranioth.github.io/SuperDash/updates/latest.json'
-export const LIVE_HISTORY_URL = 'https://elamranioth.github.io/SuperDash/updates/history.json'
+export const LIVE_HISTORY_URL = 'https://raw.githubusercontent.com/elamranioth/SuperDash/gh-pages/updates/history.json'
 export const DEFAULT_APK_DOWNLOAD_URL = 'https://elamranioth.github.io/SuperDash/SuperDash.apk'
 
 /**
@@ -79,11 +80,11 @@ export class UpdateService {
     let rawData: ReleaseInfo | null = null
     let fetchError: string | null = null
 
-    // 1. First attempt: Live online manifest with 6-second timeout
+    // 1. First attempt: Live online manifest from raw GitHub (instant, zero CDN cache delay)
     try {
       const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 6000)
-      const res = await fetch(`${LIVE_MANIFEST_URL}?t=${Date.now()}`, {
+      const timeoutId = setTimeout(() => controller.abort(), 5000)
+      const res = await fetch(`${LIVE_RAW_MANIFEST_URL}?t=${Date.now()}`, {
         headers: { 'Cache-Control': 'no-cache' },
         signal: controller.signal
       })
@@ -91,9 +92,26 @@ export class UpdateService {
       if (res.ok) {
         rawData = await res.json()
       }
-    } catch (e: unknown) {
-      console.warn('[UpdateService] Live manifest fetch failed, falling back to local asset:', e)
-      fetchError = e instanceof Error ? e.message : 'Network error'
+    } catch {
+      // Try next
+    }
+
+    // 2. Second attempt: Live manifest from GitHub Pages domain
+    if (!rawData) {
+      try {
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 5000)
+        const res = await fetch(`${LIVE_MANIFEST_URL}?t=${Date.now()}`, {
+          headers: { 'Cache-Control': 'no-cache' },
+          signal: controller.signal
+        })
+        clearTimeout(timeoutId)
+        if (res.ok) {
+          rawData = await res.json()
+        }
+      } catch (e: unknown) {
+        fetchError = e instanceof Error ? e.message : 'Network error'
+      }
     }
 
     // 2. Fallback: local relative manifest (for offline use or local development)
