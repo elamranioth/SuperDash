@@ -19,6 +19,7 @@ import {
   exportPaymentsToCSV,
   exportExpensesToCSV
 } from '@/services/finance'
+import { storageService } from '@/services/storage'
 import GlassPanel from '@/components/LiquidGlass/GlassPanel'
 import GlassButton from '@/components/LiquidGlass/GlassButton'
 import GlassModal from '@/components/LiquidGlass/GlassModal'
@@ -127,15 +128,13 @@ export default function FinanceApp({ initialInvoiceId, initialClientId }: Financ
   const [invoiceStatusFilter, setInvoiceStatusFilter] = useState<string>('all')
   const [clientSearch, setClientSearch] = useState('')
   const [clientSort, setClientSort] = useState<ClientSortOption>('name')
-  const [clientViewMode, setClientViewMode] = useState<ClientViewMode>(() => {
-    try {
-      return (localStorage.getItem('superdash_client_view_mode') as ClientViewMode) || 'grid'
-    } catch {
-      return 'grid'
-    }
-  })
+  const [clientViewMode, setClientViewMode] = useState<ClientViewMode>('grid')
   const [activeMenuClientId, setActiveMenuClientId] = useState<string | null>(null)
   const [expenseCategoryFilter, setExpenseCategoryFilter] = useState<string>('all')
+
+  useEffect(() => {
+    storageService.get<ClientViewMode>('finance_client_view_mode', 'grid').then(setClientViewMode)
+  }, [])
 
   // Deep linking support
   useEffect(() => {
@@ -166,9 +165,7 @@ export default function FinanceApp({ initialInvoiceId, initialClientId }: Financ
   const handleSetClientViewMode = (mode: ClientViewMode) => {
     sounds.playClick()
     setClientViewMode(mode)
-    try {
-      localStorage.setItem('superdash_client_view_mode', mode)
-    } catch {}
+    storageService.set('finance_client_view_mode', mode)
   }
 
   // --- FORM STATES: NEW INVOICE ---

@@ -3,6 +3,7 @@ import { X, Minus, Maximize2, Minimize2, Loader2, ChevronLeft } from 'lucide-rea
 import { getAppById } from '@/registry/appRegistry'
 import { DashboardSettings } from '@/types'
 import { sounds } from '@/utils/sound'
+import { AppErrorBoundary } from '@/components/Common/AppErrorBoundary'
 
 interface AppWindowProps {
   appId: string
@@ -36,7 +37,9 @@ export default function AppWindow({
     return (
       <div className="hidden">
         <Suspense fallback={null}>
-          <AppComponent onSettingsChange={onSettingsChange} {...appProps} />
+          <AppErrorBoundary appName={app.name} onClose={() => onClose(appId)}>
+            <AppComponent onSettingsChange={onSettingsChange} {...appProps} />
+          </AppErrorBoundary>
         </Suspense>
       </div>
     )
@@ -151,7 +154,9 @@ export default function AppWindow({
               </div>
             }
           >
-            <AppComponent onSettingsChange={onSettingsChange} {...appProps} />
+            <AppErrorBoundary appName={app.name} onClose={() => onClose(appId)}>
+              <AppComponent onSettingsChange={onSettingsChange} {...appProps} />
+            </AppErrorBoundary>
           </Suspense>
         </div>
       </div>

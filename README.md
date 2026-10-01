@@ -121,6 +121,57 @@ SuperDash includes an integrated **Updates** application (in the Utilities categ
 
 ---
 
+## 📦 Releasing SuperDash (Step-by-Step)
+
+Follow these steps to produce a verified, reliable release:
+
+1. **Update Version Numbers**:
+   - `src/version.ts`: update `SUPERDASH_VERSION = '1.x.y'` and `SUPERDASH_BUILD_DATE`.
+   - `package.json`: update `"version": "1.x.y"`.
+   - `android/app/build.gradle`: increment `versionCode` (integer) and update `versionName "1.x.y"`.
+
+2. **Update Release Manifests**:
+   - `public/updates/latest.json`: update `version`, `releaseDate`, `title`, `summary`, `highlights`, and `changes`.
+   - `public/updates/history.json`: prepend the new release entry to the array.
+
+3. **Run Verification & Build**:
+   ```bash
+   npm run build
+   npx cap sync android
+   cmd /c "android\gradlew.bat -p android assembleDebug"
+   copy /Y "android\app\build\outputs\apk\debug\app-debug.apk" "public\SuperDash.apk"
+   ```
+
+4. **Commit & Tag**:
+   ```bash
+   git add -A
+   git commit -m "release: v1.x.y"
+   git tag v1.x.y
+   ```
+
+5. **Push to GitHub**:
+   ```bash
+   git push origin main
+   git push origin v1.x.y
+   ```
+
+6. **Automated Verification**:
+   - GitHub Actions automatically builds the Android APK, creates the GitHub Release with attached `SuperDash.apk`, and deploys the web client to GitHub Pages.
+   - Open SuperDash → **Settings** → **Updates** and confirm the new release is detected and installs cleanly.
+
+---
+
+## 💾 Backup & MEGA Sync Strategy
+
+SuperDash supports independent cloud backup through desktop folder synchronization:
+1. Open **Settings** → **Data & Backup**.
+2. Tap **Choose MEGA Folder** and pick your synchronized `MEGA/SuperDash Backups` directory.
+3. SuperDash writes standardized `.superdash` backup packages with manifests and record counts.
+4. The desktop MEGA client automatically syncs backup files to the cloud with zero password or credential exposure in SuperDash.
+5. Before any restore, a safety snapshot is preserved so you can always roll back safely.
+
+---
+
 ## 🛡️ Zero Data Loss Guarantee
 
 All user data (notes, financial transactions, tasks, reminders, documents, collections, settings, and custom dashboard layouts) is stored locally on your device using `StorageService`.
