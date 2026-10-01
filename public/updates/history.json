@@ -1,5 +1,18 @@
 [
   {
+    "version": "1.7.0",
+    "releaseDate": "2026-10-01",
+    "title": "SuperDash 1.7 — Growth Application & Android Update Engine",
+    "summary": "Introduced the brand-new Growth application (leads pipeline, relationship care, playbook & referrals), refined native Android APK update engine with live background downloads, and performance optimizations.",
+    "highlights": [
+      "Brand new 'Growth' app: Leads pipeline, client relationship tracking, actionable playbooks & referral loop",
+      "Completely fixed Android update engine: Direct system download & automatic package installation",
+      "Live remote update checking across all Android versions",
+      "Liquid Glass Quick Controls Bottom Sheet from mobile header",
+      "Original SuperDash OS-grade squircle icons across all applications"
+    ]
+  },
+  {
     "version": "1.6.0",
     "releaseDate": "2026-09-30",
     "title": "SuperDash 1.6 — Mobile Minimalism, Premium Icons & Quick Controls",

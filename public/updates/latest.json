@@ -1,60 +1,42 @@
 {
-  "version": "1.6.0",
-  "releaseDate": "2026-09-30",
-  "title": "SuperDash 1.6 — Mobile Minimalism, Premium Icons & Quick Controls",
-  "summary": "Refined mobile home screen with Liquid Glass Quick Controls bottom sheet, pristine 4-column app launcher, brand-new OS-grade squircle icons, zero-clutter layout, and real in-app APK streaming downloads.",
+  "version": "1.7.0",
+  "releaseDate": "2026-10-01",
+  "title": "SuperDash 1.7 — Growth Application & Android Update Engine",
+  "summary": "Introduced the brand-new Growth application (leads pipeline, relationship care, playbook & referrals), refined native Android APK update engine with live background downloads, and performance optimizations.",
   "minAppVersion": "1.0.0",
-  "downloadUrl": "https://github.com/elamranioth/SuperDash/releases/latest",
-  "apkDownloadUrl": "https://github.com/elamranioth/SuperDash/releases/latest/download/SuperDash.apk",
+  "downloadUrl": "https://elamranioth.github.io/SuperDash/SuperDash.apk",
+  "apkDownloadUrl": "https://elamranioth.github.io/SuperDash/SuperDash.apk",
   "highlights": [
-    "Native Liquid Glass Quick Controls Bottom Sheet from mobile header",
-    "Clean Minimalist Home: removed markets strip and cluttered category rail",
-    "Original SuperDash OS-grade squircle icons with directional lighting and specular bevels",
-    "Evenly spaced 4-column responsive app launcher grid",
-    "In-App update download engine with live byte progress tracking and APK install intent"
+    "Brand new 'Growth' app: Leads pipeline, client relationship tracking, actionable playbooks & referral loop",
+    "Completely fixed Android update engine: Direct system download & automatic package installation",
+    "Live remote update checking across all Android versions",
+    "Liquid Glass Quick Controls Bottom Sheet from mobile header",
+    "Original SuperDash OS-grade squircle icons across all applications"
   ],
   "changes": [
+    {
+      "appId": "growth",
+      "appName": "Growth",
+      "type": "NEW",
+      "description": "Marketing and client-retention app: Today action dashboard, lightweight leads pipeline, client relationship timeline, and 10 practical playbooks."
+    },
+    {
+      "appId": "updates",
+      "appName": "Updates Engine",
+      "type": "FIXED",
+      "description": "Resolved Android download issues with native DownloadManager integration, direct APK fallback, and live remote manifest queries."
+    },
     {
       "appId": "home",
       "appName": "Home Screen",
       "type": "IMPROVED",
-      "description": "Simplified Home composition: compact header, universal search, clean APPLICATIONS heading, and 4-column grid. Markets and categories removed."
+      "description": "Simplified Home composition: compact header, universal search, clean 4-column grid with Growth icon."
     },
     {
       "appId": "controlcenter",
       "appName": "Quick Controls",
       "type": "IMPROVED",
-      "description": "Header sliders button now opens a native Liquid Glass Bottom Sheet without shifting or expanding the header, with theme, edit mode, alerts, and settings."
-    },
-    {
-      "appId": "launcher",
-      "appName": "App Launcher",
-      "type": "IMPROVED",
-      "description": "Bespoke squircle icons for all 15 core apps with 22% curvature, inner specular glow, drop shadow, and clean typography."
-    },
-    {
-      "appId": "time",
-      "appName": "Time",
-      "type": "IMPROVED",
-      "description": "Unified Time app with Liquid Glass hourglass timer, Pomodoro focus goals, and global world clock timezones."
-    },
-    {
-      "appId": "calculator",
-      "appName": "Calculator",
-      "type": "IMPROVED",
-      "description": "Merged standard math and multi-currency exchange converter into a single streamlined utility."
-    },
-    {
-      "appId": "tasks",
-      "appName": "Tasks",
-      "type": "IMPROVED",
-      "description": "Integrated timed alarms, reminders, and daily checklists in one clean view."
-    },
-    {
-      "appId": "updates",
-      "appName": "Updates",
-      "type": "IMPROVED",
-      "description": "Live byte-level download progress bar and direct APK package installation from Settings."
+      "description": "Header sliders button opens a native Liquid Glass Bottom Sheet without shifting or expanding the header."
     }
   ]
 }

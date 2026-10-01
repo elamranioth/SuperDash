@@ -20,7 +20,9 @@ import {
   updateService,
   ReleaseInfo,
   HistoricalRelease,
-  ChangeType
+  ChangeType,
+  openApkDownload,
+  DEFAULT_APK_DOWNLOAD_URL
 } from '@/services/updateService'
 import {
   SUPERDASH_VERSION,
@@ -110,9 +112,20 @@ export default function UpdatesApp({ onOpenApp, isEmbedded = false }: UpdatesApp
     }, 4000)
   }
 
-  // Real In-App APK Download with Progress
+  // Direct one-tap download handler
+  const handleDirectDownload = () => {
+    sounds.playClick()
+    const apkUrl = release?.apkDownloadUrl || DEFAULT_APK_DOWNLOAD_URL
+    openApkDownload(apkUrl)
+    setStatusFeedback('Download started. Check your Android notification bar or Downloads folder!')
+    setTimeout(() => {
+      setStatusFeedback(null)
+    }, 6000)
+  }
+
+  // In-App APK Download with Progress
   const handleStartDownload = async () => {
-    if (!release?.apkDownloadUrl) return
+    const apkUrl = release?.apkDownloadUrl || DEFAULT_APK_DOWNLOAD_URL
     sounds.playClick()
     setDownloadState('downloading')
     setErrorMsg(null)
@@ -120,7 +133,7 @@ export default function UpdatesApp({ onOpenApp, isEmbedded = false }: UpdatesApp
 
     try {
       const blob = await updateService.downloadApkWithProgress(
-        release.apkDownloadUrl,
+        apkUrl,
         (loaded, total, percentage) => {
           setDownloadProgress({ loaded, total, percentage })
         }
@@ -131,17 +144,12 @@ export default function UpdatesApp({ onOpenApp, isEmbedded = false }: UpdatesApp
       setDownloadBlobUrl(url)
       setDownloadState('completed')
 
-      // Trigger native download
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `SuperDash-v${release.version}.apk`
-      document.body.appendChild(a)
-      a.click()
-      document.body.removeChild(a)
+      // Also trigger Android system download manager to guarantee APK is saved to device
+      openApkDownload(apkUrl)
     } catch (err: unknown) {
       setDownloadState('error')
       const msg = err instanceof Error ? err.message : 'Download failed'
-      setErrorMsg(`Download error: ${msg}. Tap to retry or use direct download link.`)
+      setErrorMsg(`In-app stream notice: ${msg}. Tap "Direct Download" to download directly in your browser.`)
     }
   }
 
@@ -210,7 +218,7 @@ export default function UpdatesApp({ onOpenApp, isEmbedded = false }: UpdatesApp
           </div>
 
           {/* Action Buttons */}
-          <div className="flex items-center gap-2 self-start sm:self-center">
+          <div className="flex items-center gap-2 self-start sm:self-center flex-wrap">
             <button
               onClick={handleCheckForUpdates}
               disabled={checking}
@@ -220,13 +228,23 @@ export default function UpdatesApp({ onOpenApp, isEmbedded = false }: UpdatesApp
               <span>{checking ? 'Checking...' : 'Check for Updates'}</span>
             </button>
 
-            {platform === 'android' && release?.apkDownloadUrl && downloadState === 'idle' && (
+            {downloadState === 'idle' && (
               <button
-                onClick={handleStartDownload}
+                onClick={handleDirectDownload}
                 className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shadow-md transition"
               >
                 <DownloadCloud className="w-3.5 h-3.5" />
-                <span>Download APK</span>
+                <span>{isUpdateAvail ? `Download v${release?.version || '1.7.0'}` : 'Download APK'}</span>
+              </button>
+            )}
+
+            {downloadState === 'idle' && isUpdateAvail && (
+              <button
+                onClick={handleStartDownload}
+                className="flex items-center gap-1 px-3 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-slate-300 text-xs font-medium transition"
+                title="Download in-app with byte progress bar"
+              >
+                <span>Stream In-App</span>
               </button>
             )}
           </div>
@@ -238,7 +256,7 @@ export default function UpdatesApp({ onOpenApp, isEmbedded = false }: UpdatesApp
             <div className="flex items-center justify-between text-xs">
               <span className="font-semibold text-white flex items-center gap-2">
                 <ArrowDownCircle className="w-4 h-4 text-indigo-400 animate-bounce" />
-                Downloading SuperDash v{release?.version || '1.6.0'}...
+                Downloading SuperDash v{release?.version || '1.7.0'}...
               </span>
               <span className="font-mono text-indigo-300 font-bold">
                 {downloadProgress.percentage}%
@@ -268,22 +286,20 @@ export default function UpdatesApp({ onOpenApp, isEmbedded = false }: UpdatesApp
             <div className="flex items-center gap-3">
               <FileCheck className="w-6 h-6 text-emerald-400 shrink-0" />
               <div>
-                <div className="text-xs font-bold text-white">APK Download Complete!</div>
+                <div className="text-xs font-bold text-white">APK Download Ready!</div>
                 <div className="text-[11px] text-slate-300">
-                  Tap "Open Package" or tap the notification to install over existing app without losing your data.
+                  Tap "Install Update" below or check your Android notification bar to install over the existing app without losing your data.
                 </div>
               </div>
             </div>
 
-            {downloadBlobUrl && (
-              <a
-                href={downloadBlobUrl}
-                download={`SuperDash-v${release?.version || '1.6.0'}.apk`}
-                className="self-start sm:self-center px-3.5 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs shadow-md transition"
-              >
-                Install Update
-              </a>
-            )}
+            <button
+              onClick={handleDirectDownload}
+              className="self-start sm:self-center px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs shadow-md transition flex items-center gap-1.5 shrink-0"
+            >
+              <DownloadCloud className="w-4 h-4" />
+              <span>Install Update</span>
+            </button>
           </div>
         )}
 
@@ -296,9 +312,17 @@ export default function UpdatesApp({ onOpenApp, isEmbedded = false }: UpdatesApp
         )}
 
         {errorMsg && (
-          <div className="mt-3.5 p-2.5 rounded-xl bg-amber-500/20 border border-amber-500/40 text-xs text-amber-300 flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 shrink-0" />
-            <span>{errorMsg}</span>
+          <div className="mt-3.5 p-3 rounded-xl bg-amber-500/20 border border-amber-500/40 text-xs text-amber-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0 text-amber-400" />
+              <span>{errorMsg}</span>
+            </div>
+            <button
+              onClick={handleDirectDownload}
+              className="self-start sm:self-center px-3.5 py-1.5 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs shrink-0 transition"
+            >
+              Direct Download APK
+            </button>
           </div>
         )}
 
@@ -374,6 +398,19 @@ export default function UpdatesApp({ onOpenApp, isEmbedded = false }: UpdatesApp
                     </ul>
                   </div>
                 )}
+
+                <div className="mt-4 pt-3.5 border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="text-xs text-slate-400">
+                    Package installer: <span className="font-mono text-emerald-400 font-semibold">SuperDash.apk</span>
+                  </div>
+                  <button
+                    onClick={handleDirectDownload}
+                    className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-300 text-xs font-semibold shadow-sm transition"
+                  >
+                    <DownloadCloud className="w-4 h-4" />
+                    <span>Download APK Directly</span>
+                  </button>
+                </div>
               </div>
             )}
 

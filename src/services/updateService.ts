@@ -34,11 +34,41 @@ export interface HistoricalRelease {
 
 const LAST_VIEWED_VERSION_KEY = 'superdash_last_viewed_update_version'
 
+export const LIVE_MANIFEST_URL = 'https://elamranioth.github.io/SuperDash/updates/latest.json'
+export const LIVE_HISTORY_URL = 'https://elamranioth.github.io/SuperDash/updates/history.json'
+export const DEFAULT_APK_DOWNLOAD_URL = 'https://elamranioth.github.io/SuperDash/SuperDash.apk'
+
+/**
+ * Open external URL in system browser / Android download manager
+ */
+export function openApkDownload(url: string = DEFAULT_APK_DOWNLOAD_URL): void {
+  if (typeof window === 'undefined') return
+  try {
+    // 1. Try window.open with _system (Capacitor Android launches native intent)
+    const win = window.open(url, '_system')
+    if (!win) {
+      // 2. Direct anchor click fallback
+      const a = document.createElement('a')
+      a.href = url
+      a.target = '_blank'
+      a.rel = 'noopener noreferrer'
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+    }
+  } catch (err) {
+    console.error('[UpdateService] Failed to trigger download:', err)
+    window.location.href = url
+  }
+}
+
 export class UpdateService {
   private cachedLatest: ReleaseInfo | null = null
 
   /**
-   * Fetch the latest update manifest from /updates/latest.json
+   * Fetch the latest update manifest.
+   * Checks the live remote URL first so Android APK installs can discover updates.
+   * Falls back to local bundled ./updates/latest.json when offline.
    */
   async checkForUpdates(): Promise<{
     updateAvailable: boolean
@@ -46,47 +76,95 @@ export class UpdateService {
     release: ReleaseInfo | null
     error?: string
   }> {
-    try {
-      // Add cache buster query parameter
-      const res = await fetch(`./updates/latest.json?t=${Date.now()}`, {
-        headers: { 'Cache-Control': 'no-cache' }
-      })
-      if (!res.ok) {
-        throw new Error(`Failed to fetch update manifest (status: ${res.status})`)
-      }
-      const data: ReleaseInfo = await res.json()
-      this.cachedLatest = data
+    let rawData: ReleaseInfo | null = null
+    let fetchError: string | null = null
 
-      const available = isUpdateAvailable(SUPERDASH_VERSION, data.version)
-      return {
-        updateAvailable: available,
-        currentVersion: SUPERDASH_VERSION,
-        release: data
+    // 1. First attempt: Live online manifest with 6-second timeout
+    try {
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 6000)
+      const res = await fetch(`${LIVE_MANIFEST_URL}?t=${Date.now()}`, {
+        headers: { 'Cache-Control': 'no-cache' },
+        signal: controller.signal
+      })
+      clearTimeout(timeoutId)
+      if (res.ok) {
+        rawData = await res.json()
       }
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Unknown network error'
-      // If cached data is available, return that with error notice
+    } catch (e: unknown) {
+      console.warn('[UpdateService] Live manifest fetch failed, falling back to local asset:', e)
+      fetchError = e instanceof Error ? e.message : 'Network error'
+    }
+
+    // 2. Fallback: local relative manifest (for offline use or local development)
+    if (!rawData) {
+      try {
+        const res = await fetch(`./updates/latest.json?t=${Date.now()}`, {
+          headers: { 'Cache-Control': 'no-cache' }
+        })
+        if (res.ok) {
+          rawData = await res.json()
+          fetchError = null
+        }
+      } catch (localErr) {
+        console.warn('[UpdateService] Local manifest fetch failed:', localErr)
+      }
+    }
+
+    if (!rawData) {
       if (this.cachedLatest) {
         return {
           updateAvailable: isUpdateAvailable(SUPERDASH_VERSION, this.cachedLatest.version),
           currentVersion: SUPERDASH_VERSION,
           release: this.cachedLatest,
-          error: `Offline mode: ${message}`
+          error: fetchError ? `Offline mode: ${fetchError}` : undefined
         }
       }
       return {
         updateAvailable: false,
         currentVersion: SUPERDASH_VERSION,
         release: null,
-        error: message
+        error: fetchError || 'Unable to check for updates'
       }
+    }
+
+    // Ensure valid APK download URLs (normalize away any 404 GitHub releases links)
+    if (!rawData.apkDownloadUrl || rawData.apkDownloadUrl.includes('releases/latest') || rawData.apkDownloadUrl.includes('github.com')) {
+      rawData.apkDownloadUrl = DEFAULT_APK_DOWNLOAD_URL
+    }
+    if (!rawData.downloadUrl || rawData.downloadUrl.includes('releases/latest')) {
+      rawData.downloadUrl = DEFAULT_APK_DOWNLOAD_URL
+    }
+
+    this.cachedLatest = rawData
+    const available = isUpdateAvailable(SUPERDASH_VERSION, rawData.version)
+
+    return {
+      updateAvailable: available,
+      currentVersion: SUPERDASH_VERSION,
+      release: rawData,
+      error: fetchError || undefined
     }
   }
 
   /**
-   * Fetch historical release records from /updates/history.json
+   * Fetch historical release records.
+   * Tries remote first, falls back to local.
    */
   async getReleaseHistory(): Promise<HistoricalRelease[]> {
+    try {
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 6000)
+      const res = await fetch(`${LIVE_HISTORY_URL}?t=${Date.now()}`, {
+        headers: { 'Cache-Control': 'no-cache' },
+        signal: controller.signal
+      })
+      clearTimeout(timeoutId)
+      if (res.ok) return await res.json()
+    } catch {
+      // fallback to local
+    }
+
     try {
       const res = await fetch(`./updates/history.json?t=${Date.now()}`, {
         headers: { 'Cache-Control': 'no-cache' }
@@ -99,13 +177,14 @@ export class UpdateService {
   }
 
   /**
-   * Download APK with real progress callbacks
+   * Download APK with real progress callbacks.
    */
   async downloadApkWithProgress(
     url: string,
     onProgress: (loaded: number, total: number, percentage: number) => void
   ): Promise<Blob> {
-    const response = await fetch(url)
+    const downloadUrl = url || DEFAULT_APK_DOWNLOAD_URL
+    const response = await fetch(downloadUrl)
     if (!response.ok) {
       throw new Error(`Download failed: server returned status ${response.status}`)
     }
