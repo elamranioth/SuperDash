@@ -392,6 +392,28 @@ export interface Invoice {
   updatedAt: number
 }
 
+export type TransactionType = 'income' | 'expense'
+
+export interface Transaction {
+  id: string
+  type: TransactionType
+  amount: number
+  currency: string // default 'AED'
+  date: string // YYYY-MM-DD
+  description: string
+  clientId?: string
+  invoiceId?: string
+  paymentMethod?: string
+  reference?: string
+  vendor?: string
+  notes?: string
+  receiptNumber?: string
+  attachmentId?: string
+  legacyCategory?: string // preserved from legacy expenses for audit/backup, hidden in UI
+  createdAt: number
+  updatedAt: number
+}
+
 export type PaymentMethod = 'Cash' | 'Bank Transfer' | 'Card' | 'Cheque' | 'Other'
 
 export interface Payment {

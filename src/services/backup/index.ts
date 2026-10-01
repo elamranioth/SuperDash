@@ -146,6 +146,7 @@ function computeModuleStats(data: Record<string, unknown>): Record<string, numbe
   let financeCount = 0
   if (data.finance_clients) financeCount += countItems(data.finance_clients)
   if (data.finance_invoices) financeCount += countItems(data.finance_invoices)
+  if (data.finance_transactions) financeCount += countItems(data.finance_transactions)
   if (data.finance_payments) financeCount += countItems(data.finance_payments)
   if (data.finance_expenses) financeCount += countItems(data.finance_expenses)
   if (financeCount > 0) counts.finance = financeCount

@@ -6,6 +6,8 @@ import {
   Payment,
   PaymentMethod,
   Expense,
+  Transaction,
+  TransactionType,
   FinanceBusinessSettings
 } from '@/types'
 import { storageService } from '@/services/storage'
@@ -247,93 +249,130 @@ export const INITIAL_INVOICES: Invoice[] = [
   }
 ]
 
-export const INITIAL_PAYMENTS: Payment[] = [
+export const INITIAL_TRANSACTIONS: Transaction[] = [
   {
     id: 'pay-1',
-    receiptNumber: 'REC-2026/1',
-    invoiceId: 'inv-1',
-    clientId: 'client-1',
+    type: 'income',
     amount: 5250,
     currency: 'AED',
-    paymentDate: '2026-09-12',
+    date: '2026-09-12',
+    description: 'Payment for Invoice 2026/1',
+    clientId: 'client-1',
+    invoiceId: 'inv-1',
     paymentMethod: 'Bank Transfer',
+    receiptNumber: 'REC-2026/1',
     reference: 'TXN-88491-ENBD',
     notes: 'Full settlement via Emirates NBD online wire transfer.',
-    createdAt: Date.now() - 86400000 * 17
+    createdAt: Date.now() - 86400000 * 17,
+    updatedAt: Date.now() - 86400000 * 17
   },
   {
     id: 'pay-2',
-    receiptNumber: 'REC-2026/2',
-    invoiceId: 'inv-2',
-    clientId: 'client-2',
+    type: 'income',
     amount: 5000,
     currency: 'AED',
-    paymentDate: '2026-09-20',
+    date: '2026-09-20',
+    description: 'Payment for Invoice 2026/2',
+    clientId: 'client-2',
+    invoiceId: 'inv-2',
     paymentMethod: 'Bank Transfer',
+    receiptNumber: 'REC-2026/2',
     reference: 'TXN-90214-FAB',
     notes: 'First milestone tranche payment received.',
-    createdAt: Date.now() - 86400000 * 9
-  }
-]
-
-export const INITIAL_EXPENSES: Expense[] = [
+    createdAt: Date.now() - 86400000 * 9,
+    updatedAt: Date.now() - 86400000 * 9
+  },
   {
     id: 'exp-1',
-    date: '2026-09-05',
-    category: 'Office',
-    description: 'Executive Office Lease & Utilities - September',
+    type: 'expense',
     amount: 4500,
     currency: 'AED',
+    date: '2026-09-05',
+    description: 'Executive Office Lease & Utilities - September',
     paymentMethod: 'Bank Transfer',
     vendor: 'Emaar Commercial Properties',
     reference: 'LEASE-SEP-26',
     notes: 'Monthly office rent.',
+    legacyCategory: 'Office',
     createdAt: Date.now() - 86400000 * 24,
     updatedAt: Date.now() - 86400000 * 24
   },
   {
     id: 'exp-2',
-    date: '2026-09-12',
-    category: 'Software',
-    description: 'Practice Management & Cloud Storage Subscription',
+    type: 'expense',
     amount: 650,
     currency: 'AED',
+    date: '2026-09-12',
+    description: 'Practice Management & Cloud Storage Subscription',
     paymentMethod: 'Card',
     vendor: 'Clio & Google Cloud',
     reference: 'SUB-449102',
     notes: 'Annual recurring software license.',
+    legacyCategory: 'Software',
     createdAt: Date.now() - 86400000 * 17,
     updatedAt: Date.now() - 86400000 * 17
   },
   {
     id: 'exp-3',
-    date: '2026-09-18',
-    category: 'Government Fees',
-    description: 'Court e-filing & bailiff summons official registration fee',
+    type: 'expense',
     amount: 1850,
     currency: 'AED',
+    date: '2026-09-18',
+    description: 'Court e-filing & bailiff summons official registration fee',
     paymentMethod: 'Card',
     vendor: 'Dubai Courts e-Services',
     reference: 'CRT-2026-4491',
     notes: 'Case filing expense disbursed on behalf of client.',
+    legacyCategory: 'Government Fees',
     createdAt: Date.now() - 86400000 * 11,
     updatedAt: Date.now() - 86400000 * 11
   },
   {
     id: 'exp-4',
-    date: '2026-09-22',
-    category: 'Subscriptions',
-    description: 'LexisNexis UAE Legal Precedents & Federal Law Database',
+    type: 'expense',
     amount: 450,
     currency: 'AED',
+    date: '2026-09-22',
+    description: 'LexisNexis UAE Legal Precedents & Federal Law Database',
     paymentMethod: 'Card',
     vendor: 'LexisNexis Middle East',
     reference: 'LN-AE-9921',
     notes: 'Legal research database monthly fee.',
+    legacyCategory: 'Subscriptions',
     createdAt: Date.now() - 86400000 * 7,
     updatedAt: Date.now() - 86400000 * 7
   }
 ]
+
+export const INITIAL_PAYMENTS: Payment[] = INITIAL_TRANSACTIONS.filter(t => t.type === 'income').map(t => ({
+  id: t.id,
+  receiptNumber: t.receiptNumber || `REC-${t.id}`,
+  invoiceId: t.invoiceId || '',
+  clientId: t.clientId || '',
+  amount: t.amount,
+  currency: t.currency,
+  paymentDate: t.date,
+  paymentMethod: (t.paymentMethod as PaymentMethod) || 'Bank Transfer',
+  reference: t.reference,
+  notes: t.notes || t.description,
+  createdAt: t.createdAt
+}))
+
+export const INITIAL_EXPENSES: Expense[] = INITIAL_TRANSACTIONS.filter(t => t.type === 'expense').map(t => ({
+  id: t.id,
+  date: t.date,
+  category: t.legacyCategory || 'General',
+  description: t.description,
+  amount: t.amount,
+  currency: t.currency,
+  paymentMethod: t.paymentMethod || 'Card',
+  vendor: t.vendor,
+  reference: t.reference,
+  notes: t.notes,
+  attachmentId: t.attachmentId,
+  createdAt: t.createdAt,
+  updatedAt: t.updatedAt
+}))
 
 type FinanceChangeSubscriber = () => void
 
@@ -419,16 +458,16 @@ class FinanceServiceImpl {
   }
 
   async deleteClient(id: string): Promise<{ success: boolean; reason?: string }> {
-    // Referential integrity check: check if client has invoices or payments
+    // Referential integrity check: check if client has invoices or transactions
     const invoices = await this.getInvoices()
-    const payments = await this.getPayments()
+    const transactions = await this.getTransactions()
     const hasInvoices = invoices.some(i => i.clientId === id)
-    const hasPayments = payments.some(p => p.clientId === id)
+    const hasTransactions = transactions.some(t => t.clientId === id)
 
-    if (hasInvoices || hasPayments) {
+    if (hasInvoices || hasTransactions) {
       return {
         success: false,
-        reason: 'Client has existing invoices or payment history. Archive the client instead to preserve financial audit trail.'
+        reason: 'Client has existing invoices or transaction history. Archive the client instead to preserve financial audit trail.'
       }
     }
 
@@ -442,14 +481,14 @@ class FinanceServiceImpl {
   // --- INVOICES ---
   async getInvoices(): Promise<Invoice[]> {
     const list = await storageService.get<Invoice[]>('finance_invoices', INITIAL_INVOICES)
-    const payments = await this.getPayments()
+    const incomeTransactions = await this.getTransactions('income')
     const todayStr = toLocalYYYYMMDD()
 
-    // Recalculate intelligent status based on recorded payments and due dates
+    // Recalculate intelligent status based on recorded income transactions and due dates
     return list.map(inv => {
       if (inv.status === 'Cancelled') return inv
 
-      const invPayments = payments.filter(p => p.invoiceId === inv.id)
+      const invPayments = incomeTransactions.filter(p => p.invoiceId === inv.id)
       const paidSum = roundMoney(invPayments.reduce((acc, p) => acc + p.amount, 0))
       const total = roundMoney(inv.total)
 
@@ -523,9 +562,9 @@ class FinanceServiceImpl {
   }
 
   async deleteInvoice(id: string): Promise<{ success: boolean; reason?: string }> {
-    // Check if invoice has payments
-    const payments = await this.getPayments()
-    const hasPayments = payments.some(p => p.invoiceId === id)
+    // Check if invoice has payments/income
+    const incomeTransactions = await this.getTransactions('income')
+    const hasPayments = incomeTransactions.some(p => p.invoiceId === id)
 
     if (hasPayments) {
       return {
@@ -541,78 +580,283 @@ class FinanceServiceImpl {
     return { success: true }
   }
 
-  // --- PAYMENTS ---
-  async getPayments(): Promise<Payment[]> {
-    return storageService.get<Payment[]>('finance_payments', INITIAL_PAYMENTS)
+  // --- TRANSACTIONS (Unified Architecture) ---
+  private async ensureMigrated(): Promise<Transaction[]> {
+    const stored = await storageService.get<Transaction[] | null>('finance_transactions', null)
+    if (stored !== null && Array.isArray(stored)) {
+      return stored
+    }
+
+    // Inspect legacy storage keys
+    const legacyPayments = await storageService.get<Payment[] | null>('finance_payments', null)
+    const legacyExpenses = await storageService.get<Expense[] | null>('finance_expenses', null)
+
+    if (legacyPayments === null && legacyExpenses === null) {
+      await storageService.set('finance_transactions', INITIAL_TRANSACTIONS)
+      return INITIAL_TRANSACTIONS
+    }
+
+    const transactions: Transaction[] = []
+    const invoices = await storageService.get<Invoice[]>('finance_invoices', INITIAL_INVOICES)
+    const invMap = new Map(invoices.map(i => [i.id, i.invoiceNumber]))
+
+    if (legacyPayments && Array.isArray(legacyPayments)) {
+      for (const p of legacyPayments) {
+        const invNum = p.invoiceId ? invMap.get(p.invoiceId) : undefined
+        transactions.push({
+          id: p.id,
+          type: 'income',
+          amount: roundMoney(p.amount),
+          currency: p.currency || 'AED',
+          date: p.paymentDate || toLocalYYYYMMDD(),
+          description: p.notes?.trim() || (invNum ? `Payment for Invoice #${invNum}` : 'Payment received'),
+          clientId: p.clientId,
+          invoiceId: p.invoiceId,
+          paymentMethod: p.paymentMethod || 'Bank Transfer',
+          reference: p.reference,
+          receiptNumber: p.receiptNumber,
+          notes: p.notes,
+          createdAt: p.createdAt || Date.now(),
+          updatedAt: p.createdAt || Date.now()
+        })
+      }
+    }
+
+    if (legacyExpenses && Array.isArray(legacyExpenses)) {
+      for (const e of legacyExpenses) {
+        transactions.push({
+          id: e.id,
+          type: 'expense',
+          amount: roundMoney(e.amount),
+          currency: e.currency || 'AED',
+          date: e.date || toLocalYYYYMMDD(),
+          description: e.description || 'Expense',
+          paymentMethod: e.paymentMethod || 'Card',
+          vendor: e.vendor,
+          reference: e.reference,
+          notes: e.notes,
+          legacyCategory: e.category,
+          attachmentId: e.attachmentId,
+          createdAt: e.createdAt || Date.now(),
+          updatedAt: e.updatedAt || Date.now()
+        })
+      }
+    }
+
+    // If both arrays were empty, fall back to initial
+    if (transactions.length === 0) {
+      await storageService.set('finance_transactions', INITIAL_TRANSACTIONS)
+      return INITIAL_TRANSACTIONS
+    }
+
+    transactions.sort((a, b) => b.date.localeCompare(a.date) || b.createdAt - a.createdAt)
+    await storageService.set('finance_transactions', transactions)
+    return transactions
+  }
+
+  async getTransactions(type?: TransactionType): Promise<Transaction[]> {
+    const list = await this.ensureMigrated()
+    return type ? list.filter(t => t.type === type) : list
+  }
+
+  async getTransactionById(id: string): Promise<Transaction | null> {
+    const list = await this.ensureMigrated()
+    return list.find(t => t.id === id) || null
   }
 
   async getNextReceiptNumber(): Promise<string> {
-    const payments = await this.getPayments()
+    const list = await this.getTransactions('income')
     const year = new Date().getFullYear()
-    return `REC-${year}/${payments.length + 1}`
+    return `REC-${year}/${list.length + 1}`
   }
 
-  async recordPayment(data: Omit<Payment, 'id' | 'createdAt'>): Promise<Payment> {
-    const payments = await this.getPayments()
-    const newPayment: Payment = {
-      ...data,
-      id: `pay_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
-      createdAt: Date.now()
+  async createTransaction(data: Omit<Transaction, 'id' | 'createdAt' | 'updatedAt'>): Promise<Transaction> {
+    const list = await this.ensureMigrated()
+    let receiptNumber = data.receiptNumber
+    if (data.type === 'income' && !receiptNumber) {
+      receiptNumber = await this.getNextReceiptNumber()
     }
 
-    const updated = [newPayment, ...payments]
-    await storageService.set('finance_payments', updated)
-    this.notify()
-    return newPayment
-  }
-
-  async deletePayment(id: string): Promise<boolean> {
-    const payments = await this.getPayments()
-    const filtered = payments.filter(p => p.id !== id)
-    await storageService.set('finance_payments', filtered)
-    this.notify()
-    return true
-  }
-
-  // --- EXPENSES ---
-  async getExpenses(): Promise<Expense[]> {
-    return storageService.get<Expense[]>('finance_expenses', INITIAL_EXPENSES)
-  }
-
-  async createExpense(data: Omit<Expense, 'id' | 'createdAt' | 'updatedAt'>): Promise<Expense> {
-    const expenses = await this.getExpenses()
-    const newExpense: Expense = {
+    const newTxn: Transaction = {
       ...data,
-      id: `exp_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+      amount: roundMoney(data.amount),
+      currency: data.currency || 'AED',
+      receiptNumber,
+      id: `txn_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
       createdAt: Date.now(),
       updatedAt: Date.now()
     }
 
-    const updated = [newExpense, ...expenses]
-    await storageService.set('finance_expenses', updated)
+    const updated = [newTxn, ...list].sort((a, b) => b.date.localeCompare(a.date) || b.createdAt - a.createdAt)
+    await storageService.set('finance_transactions', updated)
     this.notify()
-    return newExpense
+    return newTxn
+  }
+
+  async updateTransaction(id: string, updates: Partial<Transaction>): Promise<Transaction | null> {
+    const list = await this.ensureMigrated()
+    const idx = list.findIndex(t => t.id === id)
+    if (idx === -1) return null
+
+    const updatedTxn: Transaction = {
+      ...list[idx],
+      ...updates,
+      amount: updates.amount !== undefined ? roundMoney(updates.amount) : list[idx].amount,
+      updatedAt: Date.now()
+    }
+    const updatedList = [...list]
+    updatedList[idx] = updatedTxn
+    updatedList.sort((a, b) => b.date.localeCompare(a.date) || b.createdAt - a.createdAt)
+    await storageService.set('finance_transactions', updatedList)
+    this.notify()
+    return updatedTxn
+  }
+
+  async deleteTransaction(id: string): Promise<boolean> {
+    const list = await this.ensureMigrated()
+    const filtered = list.filter(t => t.id !== id)
+    await storageService.set('finance_transactions', filtered)
+    this.notify()
+    return true
+  }
+
+  // --- COMPATIBILITY ADAPTERS (Payments & Expenses) ---
+  async getPayments(): Promise<Payment[]> {
+    const incomes = await this.getTransactions('income')
+    return incomes.map(t => ({
+      id: t.id,
+      receiptNumber: t.receiptNumber || `REC-${t.id}`,
+      invoiceId: t.invoiceId || '',
+      clientId: t.clientId || '',
+      amount: t.amount,
+      currency: t.currency,
+      paymentDate: t.date,
+      paymentMethod: (t.paymentMethod as PaymentMethod) || 'Bank Transfer',
+      reference: t.reference,
+      notes: t.notes || t.description,
+      createdAt: t.createdAt
+    }))
+  }
+
+  async recordPayment(data: Omit<Payment, 'id' | 'createdAt'>): Promise<Payment> {
+    const created = await this.createTransaction({
+      type: 'income',
+      amount: data.amount,
+      currency: data.currency,
+      date: data.paymentDate,
+      description: data.notes?.trim() || (data.invoiceId ? `Payment for Invoice #${data.invoiceId}` : 'Payment received'),
+      clientId: data.clientId,
+      invoiceId: data.invoiceId,
+      paymentMethod: data.paymentMethod,
+      reference: data.reference,
+      receiptNumber: data.receiptNumber,
+      notes: data.notes
+    })
+
+    return {
+      id: created.id,
+      receiptNumber: created.receiptNumber || '',
+      invoiceId: created.invoiceId || '',
+      clientId: created.clientId || '',
+      amount: created.amount,
+      currency: created.currency,
+      paymentDate: created.date,
+      paymentMethod: (created.paymentMethod as PaymentMethod) || 'Bank Transfer',
+      reference: created.reference,
+      notes: created.notes,
+      createdAt: created.createdAt
+    }
+  }
+
+  async deletePayment(id: string): Promise<boolean> {
+    return this.deleteTransaction(id)
+  }
+
+  async getExpenses(): Promise<Expense[]> {
+    const expenses = await this.getTransactions('expense')
+    return expenses.map(t => ({
+      id: t.id,
+      date: t.date,
+      category: t.legacyCategory || 'General',
+      description: t.description,
+      amount: t.amount,
+      currency: t.currency,
+      paymentMethod: t.paymentMethod || 'Card',
+      vendor: t.vendor,
+      reference: t.reference,
+      notes: t.notes,
+      attachmentId: t.attachmentId,
+      createdAt: t.createdAt,
+      updatedAt: t.updatedAt
+    }))
+  }
+
+  async createExpense(data: Omit<Expense, 'id' | 'createdAt' | 'updatedAt'>): Promise<Expense> {
+    const created = await this.createTransaction({
+      type: 'expense',
+      amount: data.amount,
+      currency: data.currency,
+      date: data.date,
+      description: data.description,
+      paymentMethod: data.paymentMethod,
+      vendor: data.vendor,
+      reference: data.reference,
+      notes: data.notes,
+      legacyCategory: data.category,
+      attachmentId: data.attachmentId
+    })
+
+    return {
+      id: created.id,
+      date: created.date,
+      category: created.legacyCategory || 'General',
+      description: created.description,
+      amount: created.amount,
+      currency: created.currency,
+      paymentMethod: created.paymentMethod || 'Card',
+      vendor: created.vendor,
+      reference: created.reference,
+      notes: created.notes,
+      attachmentId: created.attachmentId,
+      createdAt: created.createdAt,
+      updatedAt: created.updatedAt
+    }
   }
 
   async updateExpense(id: string, updates: Partial<Expense>): Promise<Expense | null> {
-    const expenses = await this.getExpenses()
-    const idx = expenses.findIndex(e => e.id === id)
-    if (idx === -1) return null
+    const updated = await this.updateTransaction(id, {
+      amount: updates.amount,
+      currency: updates.currency,
+      date: updates.date,
+      description: updates.description,
+      paymentMethod: updates.paymentMethod,
+      vendor: updates.vendor,
+      reference: updates.reference,
+      notes: updates.notes,
+      legacyCategory: updates.category,
+      attachmentId: updates.attachmentId
+    })
+    if (!updated) return null
 
-    const updatedExp = { ...expenses[idx], ...updates, updatedAt: Date.now() }
-    const updatedList = [...expenses]
-    updatedList[idx] = updatedExp
-    await storageService.set('finance_expenses', updatedList)
-    this.notify()
-    return updatedExp
+    return {
+      id: updated.id,
+      date: updated.date,
+      category: updated.legacyCategory || 'General',
+      description: updated.description,
+      amount: updated.amount,
+      currency: updated.currency,
+      paymentMethod: updated.paymentMethod || 'Card',
+      vendor: updated.vendor,
+      reference: updated.reference,
+      notes: updated.notes,
+      attachmentId: updated.attachmentId,
+      createdAt: updated.createdAt,
+      updatedAt: updated.updatedAt
+    }
   }
 
   async deleteExpense(id: string): Promise<boolean> {
-    const expenses = await this.getExpenses()
-    const filtered = expenses.filter(e => e.id !== id)
-    await storageService.set('finance_expenses', filtered)
-    this.notify()
-    return true
+    return this.deleteTransaction(id)
   }
 
   // --- FINANCIAL CALCULATIONS & SUMMARIES ---
@@ -621,8 +865,7 @@ class FinanceServiceImpl {
     customRange?: { start?: string; end?: string }
   ) {
     const invoices = await this.getInvoices()
-    const payments = await this.getPayments()
-    const expenses = await this.getExpenses()
+    const transactions = await this.getTransactions()
 
     // 1. Invoices in range (excluding Cancelled)
     const activeInvoices = invoices.filter(
@@ -633,22 +876,22 @@ class FinanceServiceImpl {
       activeInvoices.reduce((sum, inv) => sum + inv.total, 0)
     )
 
-    // 2. Payments recorded in range = ACTUAL CASH RECEIVED INCOME
-    const rangePayments = payments.filter(p =>
-      isDateInRange(p.paymentDate, filter, customRange)
+    // 2. Income recorded in range = ACTUAL CASH RECEIVED
+    const rangeIncome = transactions.filter(t =>
+      t.type === 'income' && isDateInRange(t.date, filter, customRange)
     )
 
     const receivedIncome = roundMoney(
-      rangePayments.reduce((sum, p) => sum + p.amount, 0)
+      rangeIncome.reduce((sum, t) => sum + t.amount, 0)
     )
 
     // 3. Expenses in range
-    const rangeExpenses = expenses.filter(e =>
-      isDateInRange(e.date, filter, customRange)
+    const rangeExpenses = transactions.filter(t =>
+      t.type === 'expense' && isDateInRange(t.date, filter, customRange)
     )
 
     const totalExpenses = roundMoney(
-      rangeExpenses.reduce((sum, e) => sum + e.amount, 0)
+      rangeExpenses.reduce((sum, t) => sum + t.amount, 0)
     )
 
     // 4. Net Cash Income = Received Cash - Total Expenses
@@ -659,10 +902,12 @@ class FinanceServiceImpl {
     let unpaidCount = 0
     let overdueCount = 0
 
+    const incomeTxns = transactions.filter(t => t.type === 'income')
+
     invoices
       .filter(i => i.status !== 'Cancelled')
       .forEach(inv => {
-        const invPayments = payments.filter(p => p.invoiceId === inv.id)
+        const invPayments = incomeTxns.filter(p => p.invoiceId === inv.id)
         const paid = roundMoney(invPayments.reduce((acc, p) => acc + p.amount, 0))
         const balance = roundMoney(Math.max(0, inv.total - paid))
 
@@ -686,24 +931,26 @@ class FinanceServiceImpl {
       unpaidCount,
       overdueCount,
       invoiceCount: activeInvoices.length,
-      paymentCount: rangePayments.length,
-      expenseCount: rangeExpenses.length
+      paymentCount: rangeIncome.length,
+      expenseCount: rangeExpenses.length,
+      transactionCount: rangeIncome.length + rangeExpenses.length
     }
   }
 
   async getClientFinancialProfile(clientId: string) {
     const client = await this.getClientById(clientId)
     const invoices = (await this.getInvoices()).filter(i => i.clientId === clientId && i.status !== 'Cancelled')
-    const payments = (await this.getPayments()).filter(p => p.clientId === clientId)
+    const transactions = (await this.getTransactions('income')).filter(p => p.clientId === clientId)
 
     const totalInvoiced = roundMoney(invoices.reduce((acc, i) => acc + i.total, 0))
-    const totalPaid = roundMoney(payments.reduce((acc, p) => acc + p.amount, 0))
+    const totalPaid = roundMoney(transactions.reduce((acc, p) => acc + p.amount, 0))
     const outstanding = roundMoney(Math.max(0, totalInvoiced - totalPaid))
 
     return {
       client,
       invoices,
-      payments,
+      payments: transactions,
+      transactions,
       totalInvoiced,
       totalPaid,
       outstanding
@@ -714,7 +961,7 @@ class FinanceServiceImpl {
     const inv = await this.getInvoiceById(invoiceId)
     if (!inv) return { total: 0, paid: 0, balance: 0, isPaid: false }
 
-    const payments = (await this.getPayments()).filter(p => p.invoiceId === invoiceId)
+    const payments = (await this.getTransactions('income')).filter(p => p.invoiceId === invoiceId)
     const paid = roundMoney(payments.reduce((acc, p) => acc + p.amount, 0))
     const balance = roundMoney(Math.max(0, inv.total - paid))
 
@@ -730,6 +977,54 @@ class FinanceServiceImpl {
 export const financeService = new FinanceServiceImpl()
 
 // ==================== CSV EXPORT UTILITIES ====================
+
+export function exportTransactionsToCSV(
+  transactions: Transaction[],
+  clients: Client[],
+  invoices: Invoice[]
+): void {
+  const clientMap = new Map(clients.map(c => [c.id, c.name || c.companyName || 'Unknown']))
+  const invoiceMap = new Map(invoices.map(i => [i.id, i.invoiceNumber]))
+
+  const headers = [
+    'Date',
+    'Type',
+    'Amount',
+    'Currency',
+    'Description',
+    'Client / Vendor',
+    'Invoice #',
+    'Payment Method',
+    'Reference',
+    'Receipt #',
+    'Notes'
+  ]
+  const escape = (val: string | number | undefined) => `"${String(val ?? '').replace(/"/g, '""')}"`
+
+  const rows = transactions.map(t => {
+    const party = t.type === 'income'
+      ? (t.clientId ? clientMap.get(t.clientId) || t.clientId : '')
+      : (t.vendor || '')
+    const inv = t.invoiceId ? (invoiceMap.get(t.invoiceId) || t.invoiceId) : ''
+
+    return [
+      escape(t.date),
+      escape(t.type === 'income' ? 'Money In' : 'Money Out'),
+      escape(t.amount),
+      escape(t.currency),
+      escape(t.description),
+      escape(party),
+      escape(inv),
+      escape(t.paymentMethod),
+      escape(t.reference),
+      escape(t.receiptNumber),
+      escape(t.notes)
+    ]
+  })
+
+  const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\r\n')
+  downloadBlob(csv, `Transactions_${toLocalYYYYMMDD()}.csv`)
+}
 
 export function exportInvoicesToCSV(invoices: Invoice[], clients: Client[]): void {
   const clientMap = new Map(clients.map(c => [c.id, c.name || c.companyName || 'Unknown']))

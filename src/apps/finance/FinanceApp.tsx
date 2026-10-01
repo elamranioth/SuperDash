@@ -7,6 +7,8 @@ import {
   Payment,
   PaymentMethod,
   Expense,
+  Transaction,
+  TransactionType,
   FinanceBusinessSettings,
   AppWindowProps
 } from '@/types'
@@ -17,7 +19,8 @@ import {
   DateRangeFilter,
   exportInvoicesToCSV,
   exportPaymentsToCSV,
-  exportExpensesToCSV
+  exportExpensesToCSV,
+  exportTransactionsToCSV
 } from '@/services/finance'
 import { storageService } from '@/services/storage'
 import GlassPanel from '@/components/LiquidGlass/GlassPanel'
@@ -57,25 +60,16 @@ import {
   Wallet,
   Settings as SettingsIcon,
   ChevronRight,
+  ChevronDown,
   BarChart3,
   LayoutGrid,
   List,
-  MoreVertical
+  MoreVertical,
+  ArrowUp,
+  ArrowDown
 } from 'lucide-react'
 
-type TabView = 'overview' | 'invoices' | 'clients' | 'payments' | 'expenses' | 'settings'
-
-const EXPENSE_CATEGORIES = [
-  'Office',
-  'Government Fees',
-  'Transport',
-  'Software',
-  'Subscriptions',
-  'Marketing',
-  'Professional Fees',
-  'Utilities',
-  'Other'
-]
+type TabView = 'overview' | 'clients' | 'invoices' | 'transactions' | 'settings'
 
 const PAYMENT_METHODS: PaymentMethod[] = [
   'Bank Transfer',
@@ -95,6 +89,16 @@ function getClientInitials(name: string): string {
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
 }
 
+function getMonthYearHeader(dateStr: string): string {
+  try {
+    const [year, month] = dateStr.split('-')
+    const date = new Date(Number(year), Number(month) - 1, 1)
+    return date.toLocaleDateString(undefined, { month: 'long', year: 'numeric' }).toUpperCase()
+  } catch {
+    return dateStr
+  }
+}
+
 interface FinanceAppProps extends Partial<AppWindowProps> {
   initialInvoiceId?: string
   initialClientId?: string
@@ -107,21 +111,22 @@ export default function FinanceApp({ initialInvoiceId, initialClientId }: Financ
   // Data states
   const [clients, setClients] = useState<Client[]>([])
   const [invoices, setInvoices] = useState<Invoice[]>([])
-  const [payments, setPayments] = useState<Payment[]>([])
-  const [expenses, setExpenses] = useState<Expense[]>([])
+  const [transactions, setTransactions] = useState<Transaction[]>([])
   const [settings, setSettings] = useState<FinanceBusinessSettings | null>(null)
   const [loading, setLoading] = useState(true)
+
+  // Derived legacy compatibility states
+  const payments = useMemo(() => transactions.filter(t => t.type === 'income'), [transactions])
+  const expenses = useMemo(() => transactions.filter(t => t.type === 'expense'), [transactions])
 
   // Modals
   const [isNewInvoiceOpen, setIsNewInvoiceOpen] = useState(false)
   const [isNewClientOpen, setIsNewClientOpen] = useState(false)
-  const [isRecordPaymentOpen, setIsRecordPaymentOpen] = useState(false)
-  const [isNewExpenseOpen, setIsNewExpenseOpen] = useState(false)
+  const [isTxnModalOpen, setIsTxnModalOpen] = useState(false)
   const [previewInvoice, setPreviewInvoice] = useState<Invoice | null>(null)
-  const [previewReceipt, setPreviewReceipt] = useState<Payment | null>(null)
+  const [previewReceipt, setPreviewReceipt] = useState<Transaction | Payment | null>(null)
   const [viewClient, setViewClient] = useState<Client | null>(null)
   const [editingClient, setEditingClient] = useState<Client | null>(null)
-  const [editingExpense, setEditingExpense] = useState<Expense | null>(null)
 
   // Filters & Searches
   const [invoiceSearch, setInvoiceSearch] = useState('')
@@ -130,7 +135,8 @@ export default function FinanceApp({ initialInvoiceId, initialClientId }: Financ
   const [clientSort, setClientSort] = useState<ClientSortOption>('name')
   const [clientViewMode, setClientViewMode] = useState<ClientViewMode>('grid')
   const [activeMenuClientId, setActiveMenuClientId] = useState<string | null>(null)
-  const [expenseCategoryFilter, setExpenseCategoryFilter] = useState<string>('all')
+  const [txnFilterType, setTxnFilterType] = useState<'all' | 'income' | 'expense'>('all')
+  const [txnSearch, setTxnSearch] = useState('')
 
   useEffect(() => {
     storageService.get<ClientViewMode>('finance_client_view_mode', 'grid').then(setClientViewMode)
@@ -194,23 +200,19 @@ export default function FinanceApp({ initialInvoiceId, initialClientId }: Financ
   const [clientTaxNumber, setClientTaxNumber] = useState('')
   const [clientNotes, setClientNotes] = useState('')
 
-  // --- FORM STATES: RECORD PAYMENT ---
-  const [payInvoiceId, setPayInvoiceId] = useState('')
-  const [payAmount, setPayAmount] = useState<number>(0)
-  const [payDate, setPayDate] = useState(toLocalYYYYMMDD())
-  const [payMethod, setPayMethod] = useState<PaymentMethod>('Bank Transfer')
-  const [payRef, setPayRef] = useState('')
-  const [payNotes, setPayNotes] = useState('')
-
-  // --- FORM STATES: EXPENSE ---
-  const [expDate, setExpDate] = useState(toLocalYYYYMMDD())
-  const [expCategory, setExpCategory] = useState('Office')
-  const [expDesc, setExpDesc] = useState('')
-  const [expAmount, setExpAmount] = useState<number>(0)
-  const [expMethod, setExpMethod] = useState('Card')
-  const [expVendor, setExpVendor] = useState('')
-  const [expRef, setExpRef] = useState('')
-  const [expNotes, setExpNotes] = useState('')
+  // --- FORM STATES: TRANSACTION (Unified Money In / Money Out) ---
+  const [txnType, setTxnType] = useState<TransactionType>('income')
+  const [txnAmount, setTxnAmount] = useState<number>(0)
+  const [txnDate, setTxnDate] = useState(toLocalYYYYMMDD())
+  const [txnDesc, setTxnDesc] = useState('')
+  const [txnClientId, setTxnClientId] = useState('')
+  const [txnInvoiceId, setTxnInvoiceId] = useState('')
+  const [txnMethod, setTxnMethod] = useState<string>('Bank Transfer')
+  const [txnVendor, setTxnVendor] = useState('')
+  const [txnRef, setTxnRef] = useState('')
+  const [txnNotes, setTxnNotes] = useState('')
+  const [editingTxnId, setEditingTxnId] = useState<string | null>(null)
+  const [showTxnMoreDetails, setShowTxnMoreDetails] = useState(false)
 
   // --- FORM STATES: SETTINGS ---
   const [settBusinessName, setSettBusinessName] = useState('')
@@ -225,17 +227,15 @@ export default function FinanceApp({ initialInvoiceId, initialClientId }: Financ
 
   // Load all finance data
   const loadData = useCallback(async () => {
-    const [cList, iList, pList, eList, sObj] = await Promise.all([
+    const [cList, iList, tList, sObj] = await Promise.all([
       financeService.getClients(true),
       financeService.getInvoices(),
-      financeService.getPayments(),
-      financeService.getExpenses(),
+      financeService.getTransactions(),
       financeService.getSettings()
     ])
     setClients(cList)
     setInvoices(iList)
-    setPayments(pList)
-    setExpenses(eList)
+    setTransactions(tList)
     setSettings(sObj)
 
     // Pre-populate settings form
@@ -276,15 +276,16 @@ export default function FinanceApp({ initialInvoiceId, initialClientId }: Financ
     totalInvoiced = roundMoney(totalInvoiced)
 
     let totalReceived = 0
-    payments.forEach(p => {
-      totalReceived += p.amount
+    let totalExpenses = 0
+
+    transactions.forEach(t => {
+      if (t.type === 'income') {
+        totalReceived += t.amount
+      } else if (t.type === 'expense') {
+        totalExpenses += t.amount
+      }
     })
     totalReceived = roundMoney(totalReceived)
-
-    let totalExpenses = 0
-    expenses.forEach(e => {
-      totalExpenses += e.amount
-    })
     totalExpenses = roundMoney(totalExpenses)
 
     const netCashIncome = roundMoney(totalReceived - totalExpenses)
@@ -293,8 +294,10 @@ export default function FinanceApp({ initialInvoiceId, initialClientId }: Financ
     let unpaidCount = 0
     let overdueCount = 0
 
+    const incomeTransactions = transactions.filter(t => t.type === 'income')
+
     activeInvoices.forEach(inv => {
-      const invPayments = payments.filter(p => p.invoiceId === inv.id)
+      const invPayments = incomeTransactions.filter(p => p.invoiceId === inv.id)
       const paid = roundMoney(invPayments.reduce((acc, p) => acc + p.amount, 0))
       const bal = roundMoney(Math.max(0, inv.total - paid))
       if (bal > 0) {
@@ -316,13 +319,13 @@ export default function FinanceApp({ initialInvoiceId, initialClientId }: Financ
       unpaidCount,
       overdueCount
     }
-  }, [invoices, payments, expenses])
+  }, [invoices, transactions])
 
   // Recent Activity Feed
   const recentActivities = useMemo(() => {
     const list: Array<{
       id: string
-      type: 'payment' | 'invoice' | 'expense'
+      type: 'income' | 'invoice' | 'expense'
       title: string
       subtitle: string
       date: string
@@ -330,25 +333,30 @@ export default function FinanceApp({ initialInvoiceId, initialClientId }: Financ
       currency: string
     }> = []
 
-    payments.slice(0, 5).forEach(p => {
-      const client = clientMap.get(p.clientId)
+    transactions.slice(0, 6).forEach(t => {
+      const client = t.clientId ? clientMap.get(t.clientId) : undefined
+      const inv = t.invoiceId ? invoices.find(i => i.id === t.invoiceId) : undefined
+      const subtitle = t.type === 'income'
+        ? `${client?.name || client?.companyName || 'Client'}${inv ? ` • Inv #${inv.invoiceNumber}` : ''}${t.paymentMethod ? ` • ${t.paymentMethod}` : ''}`
+        : `${t.vendor ? `${t.vendor} • ` : ''}${t.paymentMethod || 'Expense'}`
+
       list.push({
-        id: `act-pay-${p.id}`,
-        type: 'payment',
-        title: `Payment Received: ${p.receiptNumber}`,
-        subtitle: `${client?.name || client?.companyName || 'Client'} • via ${p.paymentMethod}`,
-        date: p.paymentDate,
-        amount: p.amount,
-        currency: p.currency
+        id: `act-txn-${t.id}`,
+        type: t.type,
+        title: t.description || (t.type === 'income' ? 'Income' : 'Expense'),
+        subtitle,
+        date: t.date,
+        amount: t.amount,
+        currency: t.currency
       })
     })
 
-    invoices.slice(0, 5).forEach(i => {
+    invoices.slice(0, 4).forEach(i => {
       const client = clientMap.get(i.clientId)
       list.push({
         id: `act-inv-${i.id}`,
         type: 'invoice',
-        title: `Invoice Issued: ${i.invoiceNumber}`,
+        title: `Invoice Issued: #${i.invoiceNumber}`,
         subtitle: `${client?.name || client?.companyName || 'Client'} • Status: ${i.status}`,
         date: i.invoiceDate,
         amount: i.total,
@@ -356,20 +364,8 @@ export default function FinanceApp({ initialInvoiceId, initialClientId }: Financ
       })
     })
 
-    expenses.slice(0, 5).forEach(e => {
-      list.push({
-        id: `act-exp-${e.id}`,
-        type: 'expense',
-        title: `Expense: ${e.description}`,
-        subtitle: `${e.category}${e.vendor ? ` • ${e.vendor}` : ''}`,
-        date: e.date,
-        amount: e.amount,
-        currency: e.currency
-      })
-    })
-
     return list.sort((a, b) => b.date.localeCompare(a.date)).slice(0, 6)
-  }, [payments, invoices, expenses, clientMap])
+  }, [transactions, invoices, clientMap])
 
   // --- ACTIONS: INVOICE ---
   const handleOpenNewInvoice = async () => {
@@ -545,103 +541,120 @@ export default function FinanceApp({ initialInvoiceId, initialClientId }: Financ
     }
   }
 
-  // --- ACTIONS: RECORD PAYMENT ---
-  const handleOpenRecordPayment = (inv?: Invoice) => {
+  // --- ACTIONS: TRANSACTIONS (Unified Money In / Money Out) ---
+  const handleOpenNewTransaction = (type: TransactionType = 'income', inv?: Invoice) => {
     sounds.playClick()
-    const targetInv = inv || invoices.find(i => i.status !== 'Paid' && i.status !== 'Cancelled') || invoices[0]
-    setPayInvoiceId(targetInv ? targetInv.id : '')
+    setEditingTxnId(null)
+    setTxnType(type)
+    setTxnDate(toLocalYYYYMMDD())
+    setTxnMethod(type === 'income' ? 'Bank Transfer' : 'Card')
+    setTxnRef('')
+    setTxnNotes('')
+    setShowTxnMoreDetails(false)
 
-    if (targetInv) {
-      const invPayments = payments.filter(p => p.invoiceId === targetInv.id)
-      const paid = roundMoney(invPayments.reduce((acc, p) => acc + p.amount, 0))
-      const bal = roundMoney(Math.max(0, targetInv.total - paid))
-      setPayAmount(bal)
+    if (type === 'income') {
+      const targetInv = inv || invoices.find(i => i.status !== 'Paid' && i.status !== 'Cancelled')
+      if (targetInv) {
+        setTxnInvoiceId(targetInv.id)
+        setTxnClientId(targetInv.clientId)
+        const invTxns = transactions.filter(t => t.type === 'income' && t.invoiceId === targetInv.id)
+        const paid = roundMoney(invTxns.reduce((acc, t) => acc + t.amount, 0))
+        const bal = roundMoney(Math.max(0, targetInv.total - paid))
+        setTxnAmount(bal)
+        setTxnDesc(`Payment for Invoice #${targetInv.invoiceNumber}`)
+      } else {
+        setTxnInvoiceId('')
+        setTxnClientId(clients[0]?.id || '')
+        setTxnAmount(0)
+        setTxnDesc('Payment received')
+      }
+      setTxnVendor('')
     } else {
-      setPayAmount(0)
+      setTxnInvoiceId('')
+      setTxnClientId('')
+      setTxnAmount(0)
+      setTxnDesc('')
+      setTxnVendor('')
     }
-
-    setPayDate(toLocalYYYYMMDD())
-    setPayMethod('Bank Transfer')
-    setPayRef('')
-    setPayNotes('')
-    setIsRecordPaymentOpen(true)
+    setIsTxnModalOpen(true)
   }
 
-  const handleSavePayment = async () => {
-    if (!payInvoiceId || payAmount <= 0) {
-      sounds.playError()
-      return
-    }
-
-    const inv = invoices.find(i => i.id === payInvoiceId)
-    if (!inv) return
-
-    sounds.playSuccess()
-    const nextReceiptNum = await financeService.getNextReceiptNumber()
-    const payment = await financeService.recordPayment({
-      receiptNumber: nextReceiptNum,
-      invoiceId: inv.id,
-      clientId: inv.clientId,
-      amount: roundMoney(payAmount),
-      currency: inv.currency,
-      paymentDate: payDate,
-      paymentMethod: payMethod,
-      reference: payRef.trim(),
-      notes: payNotes.trim()
-    })
-
-    setIsRecordPaymentOpen(false)
-    setPreviewReceipt(payment)
-  }
-
-  // --- ACTIONS: EXPENSE ---
-  const handleOpenNewExpense = () => {
+  const handleEditTransaction = (t: Transaction) => {
     sounds.playClick()
-    setExpDate(toLocalYYYYMMDD())
-    setExpCategory('Office')
-    setExpDesc('')
-    setExpAmount(0)
-    setExpMethod('Card')
-    setExpVendor('')
-    setExpRef('')
-    setExpNotes('')
-    setEditingExpense(null)
-    setIsNewExpenseOpen(true)
+    setEditingTxnId(t.id)
+    setTxnType(t.type)
+    setTxnAmount(t.amount)
+    setTxnDate(t.date)
+    setTxnDesc(t.description)
+    setTxnClientId(t.clientId || '')
+    setTxnInvoiceId(t.invoiceId || '')
+    setTxnMethod(t.paymentMethod || 'Bank Transfer')
+    setTxnVendor(t.vendor || '')
+    setTxnRef(t.reference || '')
+    setTxnNotes(t.notes || '')
+    setShowTxnMoreDetails(Boolean(t.vendor || t.reference || t.notes))
+    setIsTxnModalOpen(true)
   }
 
-  const handleSaveExpense = async () => {
-    if (!expDesc.trim() || expAmount <= 0) {
+  const handleSaveTransaction = async () => {
+    if (txnAmount <= 0) {
+      sounds.playError()
+      return
+    }
+    if (txnType === 'expense' && !txnDesc.trim()) {
       sounds.playError()
       return
     }
 
     sounds.playSuccess()
-    if (editingExpense) {
-      await financeService.updateExpense(editingExpense.id, {
-        date: expDate,
-        category: expCategory,
-        description: expDesc.trim(),
-        amount: roundMoney(expAmount),
-        paymentMethod: expMethod,
-        vendor: expVendor.trim(),
-        reference: expRef.trim(),
-        notes: expNotes.trim()
+
+    if (editingTxnId) {
+      await financeService.updateTransaction(editingTxnId, {
+        type: txnType,
+        amount: roundMoney(txnAmount),
+        date: txnDate,
+        description: txnDesc.trim() || (txnType === 'income' ? 'Payment received' : 'Expense'),
+        clientId: txnType === 'income' ? (txnClientId || undefined) : undefined,
+        invoiceId: txnType === 'income' ? (txnInvoiceId || undefined) : undefined,
+        paymentMethod: txnMethod,
+        vendor: txnType === 'expense' ? (txnVendor.trim() || undefined) : undefined,
+        reference: txnRef.trim() || undefined,
+        notes: txnNotes.trim() || undefined
       })
     } else {
-      await financeService.createExpense({
-        date: expDate,
-        category: expCategory,
-        description: expDesc.trim(),
-        amount: roundMoney(expAmount),
+      const created = await financeService.createTransaction({
+        type: txnType,
+        amount: roundMoney(txnAmount),
         currency: settings?.defaultCurrency || 'AED',
-        paymentMethod: expMethod,
-        vendor: expVendor.trim(),
-        reference: expRef.trim(),
-        notes: expNotes.trim()
+        date: txnDate,
+        description: txnDesc.trim() || (txnType === 'income' ? 'Payment received' : 'Expense'),
+        clientId: txnType === 'income' ? (txnClientId || undefined) : undefined,
+        invoiceId: txnType === 'income' ? (txnInvoiceId || undefined) : undefined,
+        paymentMethod: txnMethod,
+        vendor: txnType === 'expense' ? (txnVendor.trim() || undefined) : undefined,
+        reference: txnRef.trim() || undefined,
+        notes: txnNotes.trim() || undefined
       })
+
+      if (created.type === 'income') {
+        setPreviewReceipt(created)
+      }
     }
-    setIsNewExpenseOpen(false)
+
+    setIsTxnModalOpen(false)
   }
+
+  const handleDeleteTransaction = async (t: Transaction) => {
+    sounds.playClick()
+    const confirmDelete = window.confirm(`Delete this transaction of ${formatMoney(t.amount, t.currency)}?`)
+    if (!confirmDelete) return
+    await financeService.deleteTransaction(t.id)
+    sounds.playSuccess()
+  }
+
+  // Compatibility adapters
+  const handleOpenRecordPayment = (inv?: Invoice) => handleOpenNewTransaction('income', inv)
+  const handleOpenNewExpense = () => handleOpenNewTransaction('expense')
 
   // Listen for custom window action events from Command Palette or Universal Search
   useEffect(() => {
@@ -664,9 +677,11 @@ export default function FinanceApp({ initialInvoiceId, initialClientId }: Financ
         } else if (custom.detail.action === 'add_client') {
           handleOpenNewClient()
         } else if (custom.detail.action === 'record_payment') {
-          handleOpenRecordPayment()
+          handleOpenNewTransaction('income')
         } else if (custom.detail.action === 'add_expense') {
-          handleOpenNewExpense()
+          handleOpenNewTransaction('expense')
+        } else if (custom.detail.action === 'new_transaction') {
+          handleOpenNewTransaction('income')
         } else if (custom.detail.action === 'view_invoice' && custom.detail.invoiceId) {
           const allInvoices = await financeService.getInvoices()
           const found = allInvoices.find(
@@ -727,7 +742,9 @@ export default function FinanceApp({ initialInvoiceId, initialClientId }: Financ
     // Pre-aggregate payments by client
     const paymentsByClient = new Map<string, number>()
     payments.forEach(p => {
-      paymentsByClient.set(p.clientId, roundMoney((paymentsByClient.get(p.clientId) || 0) + (p.amount || 0)))
+      if (p.clientId) {
+        paymentsByClient.set(p.clientId, roundMoney((paymentsByClient.get(p.clientId) || 0) + (p.amount || 0)))
+      }
     })
 
     // Pre-aggregate invoices by client
@@ -827,57 +844,105 @@ export default function FinanceApp({ initialInvoiceId, initialClientId }: Financ
     })
   }, [clients, clientSearch, clientSort, clientFinancialMap])
 
-  // Filtered Expenses
-  const filteredExpenses = useMemo(() => {
-    return expenses.filter(e => {
-      if (expenseCategoryFilter !== 'all' && e.category !== expenseCategoryFilter) {
+  // Filtered Transactions
+  const filteredTransactions = useMemo(() => {
+    return transactions.filter(t => {
+      if (txnFilterType !== 'all' && t.type !== txnFilterType) {
         return false
+      }
+      const q = txnSearch.toLowerCase().trim()
+      if (q) {
+        const client = t.clientId ? clientMap.get(t.clientId) : undefined
+        const inv = t.invoiceId ? invoices.find(i => i.id === t.invoiceId) : undefined
+
+        const matchesDesc = (t.description || '').toLowerCase().includes(q)
+        const matchesVendor = (t.vendor || '').toLowerCase().includes(q)
+        const matchesClient = (client?.name || '').toLowerCase().includes(q) || (client?.companyName || '').toLowerCase().includes(q)
+        const matchesInv = (inv?.invoiceNumber || '').toLowerCase().includes(q)
+        const matchesReceipt = (t.receiptNumber || '').toLowerCase().includes(q)
+        const matchesRef = (t.reference || '').toLowerCase().includes(q)
+        const matchesNotes = (t.notes || '').toLowerCase().includes(q)
+        const matchesMethod = (t.paymentMethod || '').toLowerCase().includes(q)
+
+        if (!matchesDesc && !matchesVendor && !matchesClient && !matchesInv && !matchesReceipt && !matchesRef && !matchesNotes && !matchesMethod) {
+          return false
+        }
       }
       return true
     })
-  }, [expenses, expenseCategoryFilter])
+  }, [transactions, txnFilterType, txnSearch, clientMap, invoices])
+
+  // Group transactions by Year-Month
+  const groupedTransactions = useMemo(() => {
+    const groups: { monthKey: string; monthLabel: string; list: Transaction[]; totalIn: number; totalOut: number }[] = []
+    const groupMap = new Map<string, { monthKey: string; monthLabel: string; list: Transaction[]; totalIn: number; totalOut: number }>()
+
+    filteredTransactions.forEach(t => {
+      const key = t.date ? t.date.slice(0, 7) : 'Other'
+      if (!groupMap.has(key)) {
+        const item = {
+          monthKey: key,
+          monthLabel: key !== 'Other' ? getMonthYearHeader(t.date) : 'OTHER',
+          list: [],
+          totalIn: 0,
+          totalOut: 0
+        }
+        groupMap.set(key, item)
+        groups.push(item)
+      }
+      const g = groupMap.get(key)!
+      g.list.push(t)
+      if (t.type === 'income') {
+        g.totalIn = roundMoney(g.totalIn + t.amount)
+      } else {
+        g.totalOut = roundMoney(g.totalOut + t.amount)
+      }
+    })
+
+    return groups
+  }, [filteredTransactions])
+
+  const incomeTxnCount = useMemo(() => transactions.filter(t => t.type === 'income').length, [transactions])
+  const expenseTxnCount = useMemo(() => transactions.filter(t => t.type === 'expense').length, [transactions])
 
   return (
     <div className="h-full flex flex-col bg-slate-950/40 text-slate-100 overflow-hidden select-none">
       {/* Standard AppHeader */}
       <AppHeader
         title="Finance"
-        subtitle="Practice billing, cashflow, invoices & receivables"
+        subtitle="Practice billing, cashflow, invoices & transactions"
         icon={Wallet}
         gradient="from-emerald-500 to-teal-600"
-        primaryAction={{
-          label: 'New Invoice',
-          icon: Plus,
-          onClick: handleOpenNewInvoice
-        }}
-        secondaryAction={{
-          label: 'Record Payment',
-          icon: CreditCard,
-          onClick: () => handleOpenRecordPayment()
-        }}
-      >
-        <GlassButton
-          variant="ghost"
-          size="sm"
-          onClick={handleOpenNewExpense}
-          title="Record an expense"
-        >
-          <TrendingDown className="w-3.5 h-3.5 mr-1 text-rose-400" />
-          <span className="hidden sm:inline">Add Expense</span>
-        </GlassButton>
-      </AppHeader>
+        primaryAction={
+          activeTab === 'invoices'
+            ? {
+                label: 'New Invoice',
+                icon: Plus,
+                onClick: handleOpenNewInvoice
+              }
+            : activeTab === 'clients'
+            ? {
+                label: 'New Client',
+                icon: Plus,
+                onClick: handleOpenNewClient
+              }
+            : {
+                label: 'New Transaction',
+                icon: Plus,
+                onClick: () => handleOpenNewTransaction('income')
+              }
+        }
+      />
 
       {/* Tab Navigation Strip */}
       <div className="px-3 sm:px-6 py-2 border-b border-white/10 shrink-0 flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-white/[0.02]">
         <div className="flex items-center gap-1 p-1 rounded-2xl bg-white/[0.04] border border-white/10 overflow-x-auto no-scrollbar w-full sm:w-auto">
           {(
             [
-              { id: 'overview', label: 'Overview', icon: BarChart3 },
-              { id: 'invoices', label: 'Invoices', icon: FileText },
-              { id: 'clients', label: 'Clients', icon: Users },
-              { id: 'payments', label: 'Payments', icon: CreditCard },
-              { id: 'expenses', label: 'Expenses', icon: TrendingDown },
-              { id: 'settings', label: 'Settings', icon: SettingsIcon }
+              { id: 'overview', label: 'Overview', mobileLabel: 'Overview', icon: BarChart3 },
+              { id: 'clients', label: 'Clients', mobileLabel: 'Clients', icon: Users },
+              { id: 'invoices', label: 'Invoices', mobileLabel: 'Invoices', icon: FileText },
+              { id: 'transactions', label: 'Transactions', mobileLabel: 'Money', icon: ArrowUpRight }
             ] as const
           ).map(tab => {
             const Icon = tab.icon
@@ -896,33 +961,53 @@ export default function FinanceApp({ initialInvoiceId, initialClientId }: Financ
                 )}
               >
                 <Icon className="w-3.5 h-3.5" />
-                <span>{tab.label}</span>
+                <span className="hidden sm:inline">{tab.label}</span>
+                <span className="sm:hidden">{tab.mobileLabel}</span>
               </button>
             )
           })}
         </div>
 
-        {/* Date Range Selector for Overview */}
-        {activeTab === 'overview' && (
-          <div className="flex items-center gap-1.5 text-xs self-end sm:self-auto">
-            <Calendar className="w-3.5 h-3.5 text-slate-400 hidden sm:inline" />
-            <select
-              value={dateFilter}
-              onChange={e => {
-                sounds.playClick()
-                setDateFilter(e.target.value as DateRangeFilter)
-              }}
-              className="bg-white/[0.06] border border-white/10 text-slate-200 rounded-xl px-2.5 py-1 text-xs focus:outline-none focus:border-emerald-400/50"
-            >
-              <option value="today" className="bg-slate-900">Today</option>
-              <option value="this_week" className="bg-slate-900">This Week</option>
-              <option value="this_month" className="bg-slate-900">This Month</option>
-              <option value="this_quarter" className="bg-slate-900">This Quarter</option>
-              <option value="this_year" className="bg-slate-900">This Year</option>
-              <option value="all_time" className="bg-slate-900">All Time</option>
-            </select>
-          </div>
-        )}
+        {/* Date Range Selector for Overview & Settings Shortcut */}
+        <div className="flex items-center gap-2 self-end sm:self-auto">
+          {activeTab === 'overview' && (
+            <div className="flex items-center gap-1.5 text-xs">
+              <Calendar className="w-3.5 h-3.5 text-slate-400 hidden sm:inline" />
+              <select
+                value={dateFilter}
+                onChange={e => {
+                  sounds.playClick()
+                  setDateFilter(e.target.value as DateRangeFilter)
+                }}
+                className="bg-white/[0.06] border border-white/10 text-slate-200 rounded-xl px-2.5 py-1 text-xs focus:outline-none focus:border-emerald-400/50"
+              >
+                <option value="today" className="bg-slate-900">Today</option>
+                <option value="this_week" className="bg-slate-900">This Week</option>
+                <option value="this_month" className="bg-slate-900">This Month</option>
+                <option value="this_quarter" className="bg-slate-900">This Quarter</option>
+                <option value="this_year" className="bg-slate-900">This Year</option>
+                <option value="all_time" className="bg-slate-900">All Time</option>
+              </select>
+            </div>
+          )}
+
+          <button
+            onClick={() => {
+              sounds.playClick()
+              setActiveTab(activeTab === 'settings' ? 'overview' : 'settings')
+            }}
+            className={cn(
+              'p-1.5 rounded-xl border text-xs transition flex items-center gap-1',
+              activeTab === 'settings'
+                ? 'bg-emerald-500/20 text-emerald-200 border-emerald-500/40'
+                : 'text-slate-400 hover:text-white hover:bg-white/5 border-transparent'
+            )}
+            title="Finance Settings"
+          >
+            <SettingsIcon className="w-3.5 h-3.5" />
+            <span className="hidden lg:inline text-[11px]">Settings</span>
+          </button>
+        </div>
       </div>
 
       {/* Main Tab Views */}
@@ -938,7 +1023,15 @@ export default function FinanceApp({ initialInvoiceId, initialClientId }: Financ
             {/* 3 Simple Primary Financial Indicator Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5">
               {/* 1. TOTAL RECEIVED */}
-              <GlassPanel intensity="subtle" className="p-5 md:p-6 space-y-2 border-emerald-500/30 bg-emerald-500/[0.08] hover:border-emerald-500/50 transition-all rounded-3xl relative overflow-hidden group">
+              <GlassPanel
+                intensity="subtle"
+                onClick={() => {
+                  sounds.playClick()
+                  setActiveTab('transactions')
+                  setTxnFilterType('income')
+                }}
+                className="p-5 md:p-6 space-y-2 border-emerald-500/30 bg-emerald-500/[0.08] hover:border-emerald-500/50 transition-all rounded-3xl relative overflow-hidden group cursor-pointer"
+              >
                 <div className="glass-specular" />
                 <div className="text-xs font-bold uppercase tracking-wider text-emerald-300 flex items-center justify-between">
                   <span className="flex items-center gap-2">
@@ -954,7 +1047,10 @@ export default function FinanceApp({ initialInvoiceId, initialClientId }: Financ
                 <div className="text-2xl md:text-3xl font-extrabold text-white font-mono tracking-tight pt-1">
                   {formatMoney(overviewStats.totalReceived)}
                 </div>
-                <div className="text-xs text-slate-400">Collected cash payments</div>
+                <div className="text-xs text-slate-400 flex items-center justify-between">
+                  <span>Collected cash payments</span>
+                  <span className="text-emerald-300 hover:underline text-[11px]">View income &rarr;</span>
+                </div>
               </GlassPanel>
 
               {/* 2. TOTAL PENDING */}
@@ -993,7 +1089,8 @@ export default function FinanceApp({ initialInvoiceId, initialClientId }: Financ
                 intensity="subtle"
                 onClick={() => {
                   sounds.playClick()
-                  setActiveTab('expenses')
+                  setActiveTab('transactions')
+                  setTxnFilterType('expense')
                 }}
                 className="p-5 md:p-6 space-y-2 border-rose-500/30 bg-rose-500/[0.08] hover:border-rose-500/50 transition-all rounded-3xl relative overflow-hidden group cursor-pointer"
               >
@@ -1112,14 +1209,14 @@ export default function FinanceApp({ initialInvoiceId, initialClientId }: Financ
                         <div
                           className={cn(
                             'p-1.5 rounded-lg border text-xs',
-                            act.type === 'payment'
+                            act.type === 'income'
                               ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
                               : act.type === 'invoice'
                               ? 'bg-blue-500/20 text-blue-300 border-blue-500/30'
                               : 'bg-rose-500/20 text-rose-300 border-rose-500/30'
                           )}
                         >
-                          {act.type === 'payment' ? (
+                          {act.type === 'income' ? (
                             <ArrowDownLeft className="w-3.5 h-3.5" />
                           ) : act.type === 'invoice' ? (
                             <FileText className="w-3.5 h-3.5" />
@@ -1139,14 +1236,14 @@ export default function FinanceApp({ initialInvoiceId, initialClientId }: Financ
                         <div
                           className={cn(
                             'text-xs font-mono font-bold',
-                            act.type === 'payment'
+                            act.type === 'income'
                               ? 'text-emerald-400'
                               : act.type === 'invoice'
                               ? 'text-white'
                               : 'text-rose-400'
                           )}
                         >
-                          {act.type === 'payment' ? '+' : act.type === 'expense' ? '-' : ''}
+                          {act.type === 'income' ? '+' : act.type === 'expense' ? '-' : ''}
                           {formatMoney(act.amount, act.currency)}
                         </div>
                         <div className="text-[10px] text-slate-400">{act.date}</div>
@@ -1885,22 +1982,89 @@ export default function FinanceApp({ initialInvoiceId, initialClientId }: Financ
               </div>
             )}
           </div>
-        ) : activeTab === 'payments' ? (
-          /* ==================== 4. PAYMENTS SCREEN ==================== */
+        ) : activeTab === 'transactions' ? (
+          /* ==================== 4. TRANSACTIONS SCREEN (Unified In & Out) ==================== */
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-sm font-bold text-white">Payment Receipts & History</h3>
-                <p className="text-xs text-slate-400">
-                  All recorded client settlements and generated payment receipts
-                </p>
+            {/* Toolbar */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+              {/* Filter Pills + Search */}
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 flex-1">
+                {/* Direction Filter Pills */}
+                <div className="flex items-center gap-1 p-1 rounded-xl bg-white/[0.04] border border-white/10 shrink-0 self-start sm:self-auto">
+                  <button
+                    onClick={() => {
+                      sounds.playClick()
+                      setTxnFilterType('all')
+                    }}
+                    className={cn(
+                      'px-2.5 py-1 rounded-lg text-xs font-medium transition',
+                      txnFilterType === 'all'
+                        ? 'bg-white/15 text-white font-semibold shadow-sm'
+                        : 'text-slate-400 hover:text-white'
+                    )}
+                  >
+                    All ({transactions.length})
+                  </button>
+                  <button
+                    onClick={() => {
+                      sounds.playClick()
+                      setTxnFilterType('income')
+                    }}
+                    className={cn(
+                      'px-2.5 py-1 rounded-lg text-xs font-medium transition flex items-center gap-1',
+                      txnFilterType === 'income'
+                        ? 'bg-emerald-500/20 text-emerald-300 font-semibold border border-emerald-500/30'
+                        : 'text-slate-400 hover:text-emerald-300'
+                    )}
+                  >
+                    <ArrowUp className="w-3 h-3 text-emerald-400" />
+                    <span>In ({incomeTxnCount})</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      sounds.playClick()
+                      setTxnFilterType('expense')
+                    }}
+                    className={cn(
+                      'px-2.5 py-1 rounded-lg text-xs font-medium transition flex items-center gap-1',
+                      txnFilterType === 'expense'
+                        ? 'bg-rose-500/20 text-rose-300 font-semibold border border-rose-500/30'
+                        : 'text-slate-400 hover:text-rose-300'
+                    )}
+                  >
+                    <ArrowDown className="w-3 h-3 text-rose-400" />
+                    <span>Out ({expenseTxnCount})</span>
+                  </button>
+                </div>
+
+                {/* Search */}
+                <div className="relative flex-1 max-w-sm">
+                  <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="text"
+                    value={txnSearch}
+                    onChange={e => setTxnSearch(e.target.value)}
+                    placeholder="Search by description, client, vendor, invoice..."
+                    className="w-full pl-8.5 pr-8 py-1.5 rounded-xl bg-white/[0.06] border border-white/10 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-400/50"
+                  />
+                  {txnSearch && (
+                    <button
+                      onClick={() => setTxnSearch('')}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
               </div>
 
-              <div className="flex items-center gap-2">
+              {/* Action Buttons */}
+              <div className="flex items-center gap-2 shrink-0">
                 <GlassButton
                   size="sm"
                   variant="default"
-                  onClick={() => exportPaymentsToCSV(payments, clients, invoices)}
+                  onClick={() => exportTransactionsToCSV(filteredTransactions, clients, invoices)}
+                  title="Export Transactions CSV"
                 >
                   <Download className="w-3.5 h-3.5 mr-1" />
                   <span className="hidden sm:inline">Export CSV</span>
@@ -1909,155 +2073,343 @@ export default function FinanceApp({ initialInvoiceId, initialClientId }: Financ
                 <GlassButton
                   size="sm"
                   variant="primary"
-                  onClick={() => handleOpenRecordPayment()}
+                  onClick={() => handleOpenNewTransaction('income')}
                 >
-                  <Plus className="w-4 h-4 mr-1" /> Record Payment
+                  <Plus className="w-4 h-4 mr-1" />
+                  <span>Add Transaction</span>
                 </GlassButton>
               </div>
             </div>
 
-            <div className="rounded-2xl liquid-glass overflow-hidden border border-white/10">
-              <table className="w-full text-left text-xs border-collapse">
-                <thead>
-                  <tr className="border-b border-white/10 bg-white/[0.03] text-[11px] uppercase tracking-wider text-slate-400 select-none">
-                    <th className="py-3 px-4 font-semibold">Receipt #</th>
-                    <th className="py-3 px-4 font-semibold">Invoice #</th>
-                    <th className="py-3 px-4 font-semibold">Client</th>
-                    <th className="py-3 px-4 font-semibold">Date</th>
-                    <th className="py-3 px-4 font-semibold">Method</th>
-                    <th className="py-3 px-4 font-semibold font-mono text-right">Amount Paid</th>
-                    <th className="py-3 px-4 font-semibold text-right">Receipt</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-white/5">
-                  {payments.map(p => {
-                    const client = clientMap.get(p.clientId)
-                    const inv = invoices.find(i => i.id === p.invoiceId)
-
-                    return (
-                      <tr key={p.id} className="hover:bg-white/[0.04] transition">
-                        <td className="py-3.5 px-4 font-mono font-bold text-emerald-300">
-                          {p.receiptNumber}
-                        </td>
-
-                        <td className="py-3.5 px-4 font-mono text-slate-300">
-                          {inv?.invoiceNumber || 'Direct Payment'}
-                        </td>
-
-                        <td className="py-3.5 px-4 text-slate-200">
-                          <div className="font-semibold">{client?.name || 'Client'}</div>
-                          {client?.companyName && (
-                            <div className="text-[11px] text-slate-400">{client.companyName}</div>
-                          )}
-                        </td>
-
-                        <td className="py-3.5 px-4 text-slate-400">{p.paymentDate}</td>
-
-                        <td className="py-3.5 px-4">
-                          <span className="px-2 py-0.5 rounded-full bg-white/[0.06] text-slate-300 text-[10px]">
-                            {p.paymentMethod}
-                          </span>
-                        </td>
-
-                        <td className="py-3.5 px-4 text-right font-mono font-bold text-emerald-400">
-                          {formatMoney(p.amount, p.currency)}
-                        </td>
-
-                        <td className="py-3.5 px-4 text-right">
-                          <button
-                            onClick={() => {
-                              sounds.playClick()
-                              setPreviewReceipt(p)
-                            }}
-                            className="p-1.5 rounded-xl hover:bg-white/10 text-slate-400 hover:text-white transition"
-                            title="View / Print Receipt"
-                          >
-                            <Printer className="w-3.5 h-3.5" />
-                          </button>
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        ) : activeTab === 'expenses' ? (
-          /* ==================== 5. EXPENSES SCREEN ==================== */
-          <div className="space-y-4">
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-              <div className="flex items-center gap-2">
-                <select
-                  value={expenseCategoryFilter}
-                  onChange={e => setExpenseCategoryFilter(e.target.value)}
-                  className="bg-white/[0.06] border border-white/10 text-slate-300 rounded-xl px-2.5 py-1.5 text-xs focus:outline-none focus:border-emerald-400/50"
-                >
-                  <option value="all" className="bg-slate-900">All Categories</option>
-                  {EXPENSE_CATEGORIES.map(cat => (
-                    <option key={cat} value={cat} className="bg-slate-900">{cat}</option>
-                  ))}
-                </select>
+            {/* Empty State */}
+            {filteredTransactions.length === 0 ? (
+              <div className="p-8 text-center rounded-2xl liquid-glass border border-white/10 space-y-3">
+                <Wallet className="w-8 h-8 mx-auto text-slate-500" />
+                <div className="text-sm font-semibold text-white">No transactions found</div>
+                <p className="text-xs text-slate-400 max-w-xs mx-auto">
+                  {txnSearch || txnFilterType !== 'all'
+                    ? 'Try adjusting your search query or filter criteria.'
+                    : 'Start recording client payments and operational expenses to track your complete cashflow.'}
+                </p>
+                <div className="pt-2 flex items-center justify-center gap-2">
+                  <GlassButton
+                    size="sm"
+                    variant="primary"
+                    onClick={() => handleOpenNewTransaction('income')}
+                  >
+                    <Plus className="w-3.5 h-3.5 mr-1" /> Money In
+                  </GlassButton>
+                  <GlassButton
+                    size="sm"
+                    variant="default"
+                    onClick={() => handleOpenNewTransaction('expense')}
+                  >
+                    <Plus className="w-3.5 h-3.5 mr-1 text-rose-400" /> Money Out
+                  </GlassButton>
+                </div>
               </div>
-
-              <div className="flex items-center gap-2">
-                <GlassButton
-                  size="sm"
-                  variant="default"
-                  onClick={() => exportExpensesToCSV(filteredExpenses)}
-                >
-                  <Download className="w-3.5 h-3.5 mr-1" />
-                  <span className="hidden sm:inline">Export CSV</span>
-                </GlassButton>
-
-                <GlassButton size="sm" variant="primary" onClick={handleOpenNewExpense}>
-                  <Plus className="w-4 h-4 mr-1" /> Add Expense
-                </GlassButton>
-              </div>
-            </div>
-
-            <div className="rounded-2xl liquid-glass overflow-hidden border border-white/10">
-              <table className="w-full text-left text-xs border-collapse">
-                <thead>
-                  <tr className="border-b border-white/10 bg-white/[0.03] text-[11px] uppercase tracking-wider text-slate-400 select-none">
-                    <th className="py-3 px-4 font-semibold">Date</th>
-                    <th className="py-3 px-4 font-semibold">Category</th>
-                    <th className="py-3 px-4 font-semibold">Description</th>
-                    <th className="py-3 px-4 font-semibold">Vendor</th>
-                    <th className="py-3 px-4 font-semibold font-mono text-right">Amount</th>
-                    <th className="py-3 px-4 font-semibold text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-white/5">
-                  {filteredExpenses.map(e => (
-                    <tr key={e.id} className="hover:bg-white/[0.04] transition group">
-                      <td className="py-3.5 px-4 text-slate-300">{e.date}</td>
-                      <td className="py-3.5 px-4">
-                        <span className="px-2 py-0.5 rounded-full bg-white/[0.06] text-slate-300 border border-white/10 text-[10px]">
-                          {e.category}
+            ) : (
+              /* Grouped List by Month */
+              <div className="space-y-6">
+                {groupedTransactions.map(group => (
+                  <div key={group.monthKey} className="space-y-2.5">
+                    {/* Month Section Header */}
+                    <div className="flex items-center justify-between px-1 text-xs">
+                      <div className="font-bold uppercase tracking-wider text-slate-400 text-[11px] flex items-center gap-2">
+                        <Calendar className="w-3 h-3 text-slate-400" />
+                        <span>{group.monthLabel}</span>
+                        <span className="text-[10px] font-normal text-slate-500">
+                          ({group.list.length})
                         </span>
-                      </td>
-                      <td className="py-3.5 px-4 font-medium text-white">{e.description}</td>
-                      <td className="py-3.5 px-4 text-slate-400">{e.vendor || '—'}</td>
-                      <td className="py-3.5 px-4 text-right font-mono font-bold text-rose-300">
-                        {formatMoney(e.amount, e.currency)}
-                      </td>
-                      <td className="py-3.5 px-4 text-right">
-                        <button
-                          onClick={async () => {
-                            sounds.playClick()
-                            await financeService.deleteExpense(e.id)
-                          }}
-                          className="p-1.5 rounded-xl hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 transition"
-                          title="Delete Expense"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                      </div>
+                      <div className="flex items-center gap-2 font-mono text-[11px]">
+                        {group.totalIn > 0 && (
+                          <span className="text-emerald-400 font-semibold">
+                            +{formatMoney(group.totalIn)}
+                          </span>
+                        )}
+                        {group.totalOut > 0 && (
+                          <span className="text-rose-400 font-semibold">
+                            -{formatMoney(group.totalOut)}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* MOBILE VIEW (< 768px): Vertical Compact Cards with Zero Overflow */}
+                    <div className="block md:hidden space-y-2">
+                      {group.list.map(t => {
+                        const client = t.clientId ? clientMap.get(t.clientId) : undefined
+                        const inv = t.invoiceId ? invoices.find(i => i.id === t.invoiceId) : undefined
+                        const isIncome = t.type === 'income'
+
+                        return (
+                          <div
+                            key={t.id}
+                            onClick={() => handleEditTransaction(t)}
+                            className="p-3 rounded-2xl liquid-glass border border-white/10 hover:border-white/20 transition active:scale-[0.99] cursor-pointer flex items-center gap-3 min-w-0 max-w-full"
+                          >
+                            {/* Direction Icon Badge */}
+                            <div
+                              className={cn(
+                                'w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border font-bold text-xs',
+                                isIncome
+                                  ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400'
+                                  : 'bg-rose-500/15 border-rose-500/30 text-rose-400'
+                              )}
+                            >
+                              {isIncome ? (
+                                <ArrowUp className="w-4 h-4" />
+                              ) : (
+                                <ArrowDown className="w-4 h-4" />
+                              )}
+                            </div>
+
+                            {/* Center Content: Title, subtitle, meta */}
+                            <div className="min-w-0 flex-1">
+                              <div className="font-semibold text-white text-xs truncate">
+                                {t.description || (isIncome ? 'Payment' : 'Expense')}
+                              </div>
+                              <div className="text-[11px] text-slate-400 truncate mt-0.5 flex items-center gap-1.5 flex-wrap">
+                                <span>{t.date}</span>
+                                {isIncome && client && (
+                                  <>
+                                    <span>•</span>
+                                    <span className="text-slate-300 font-medium truncate max-w-[120px]">
+                                      {client.name || client.companyName}
+                                    </span>
+                                  </>
+                                )}
+                                {!isIncome && t.vendor && (
+                                  <>
+                                    <span>•</span>
+                                    <span className="text-slate-300 truncate max-w-[120px]">
+                                      {t.vendor}
+                                    </span>
+                                  </>
+                                )}
+                                {inv && (
+                                  <>
+                                    <span>•</span>
+                                    <span className="font-mono text-slate-400">
+                                      #{inv.invoiceNumber}
+                                    </span>
+                                  </>
+                                )}
+                                {t.paymentMethod && (
+                                  <span className="text-[10px] px-1.5 py-0.2 rounded bg-white/5 text-slate-400">
+                                    {t.paymentMethod}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Right: Amount & Quick Actions */}
+                            <div
+                              className="text-right shrink-0 flex items-center gap-2"
+                              onClick={e => e.stopPropagation()}
+                            >
+                              <div className="text-right">
+                                <div
+                                  className={cn(
+                                    'font-mono font-bold text-xs whitespace-nowrap',
+                                    isIncome ? 'text-emerald-400' : 'text-rose-300'
+                                  )}
+                                >
+                                  {isIncome ? '+' : '-'}
+                                  {formatMoney(t.amount, t.currency)}
+                                </div>
+                                {t.receiptNumber && (
+                                  <div className="text-[10px] font-mono text-slate-500 truncate max-w-[70px]">
+                                    {t.receiptNumber}
+                                  </div>
+                                )}
+                              </div>
+
+                              {isIncome && (
+                                <button
+                                  onClick={() => {
+                                    sounds.playClick()
+                                    setPreviewReceipt(t)
+                                  }}
+                                  className="p-1.5 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white transition"
+                                  title="Print Receipt"
+                                >
+                                  <Printer className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+
+                              <button
+                                onClick={() => handleDeleteTransaction(t)}
+                                className="p-1.5 rounded-lg hover:bg-rose-500/20 text-slate-500 hover:text-rose-400 transition"
+                                title="Delete"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+
+                    {/* DESKTOP VIEW (>= 768px): Clean Responsive Table */}
+                    <div className="hidden md:block rounded-2xl liquid-glass overflow-hidden border border-white/10">
+                      <table className="w-full text-left text-xs border-collapse">
+                        <thead>
+                          <tr className="border-b border-white/10 bg-white/[0.03] text-[11px] uppercase tracking-wider text-slate-400 select-none">
+                            <th className="py-3 px-4 font-semibold">Date</th>
+                            <th className="py-3 px-4 font-semibold">Type</th>
+                            <th className="py-3 px-4 font-semibold">Description</th>
+                            <th className="py-3 px-4 font-semibold">Client / Vendor</th>
+                            <th className="py-3 px-4 font-semibold">Invoice / Receipt</th>
+                            <th className="py-3 px-4 font-semibold">Method</th>
+                            <th className="py-3 px-4 font-semibold font-mono text-right">Amount</th>
+                            <th className="py-3 px-4 font-semibold text-right">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-white/5">
+                          {group.list.map(t => {
+                            const client = t.clientId ? clientMap.get(t.clientId) : undefined
+                            const inv = t.invoiceId ? invoices.find(i => i.id === t.invoiceId) : undefined
+                            const isIncome = t.type === 'income'
+
+                            return (
+                              <tr
+                                key={t.id}
+                                className="hover:bg-white/[0.04] transition group cursor-pointer"
+                                onClick={() => handleEditTransaction(t)}
+                              >
+                                <td className="py-3 px-4 text-slate-400 whitespace-nowrap font-mono text-[11px]">
+                                  {t.date}
+                                </td>
+
+                                <td className="py-3 px-4 whitespace-nowrap">
+                                  <span
+                                    className={cn(
+                                      'px-2 py-0.5 rounded-full text-[10px] font-semibold border flex items-center gap-1 w-fit',
+                                      isIncome
+                                        ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
+                                        : 'bg-rose-500/15 text-rose-300 border-rose-500/30'
+                                    )}
+                                  >
+                                    {isIncome ? (
+                                      <>
+                                        <ArrowUp className="w-3 h-3 text-emerald-400" />
+                                        <span>Money In</span>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <ArrowDown className="w-3 h-3 text-rose-400" />
+                                        <span>Money Out</span>
+                                      </>
+                                    )}
+                                  </span>
+                                </td>
+
+                                <td className="py-3 px-4 text-white font-medium max-w-xs truncate">
+                                  {t.description || (isIncome ? 'Payment received' : 'Expense')}
+                                </td>
+
+                                <td className="py-3 px-4 text-slate-300">
+                                  {isIncome ? (
+                                    client ? (
+                                      <div>
+                                        <div className="font-semibold text-slate-200">
+                                          {client.name}
+                                        </div>
+                                        {client.companyName && (
+                                          <div className="text-[11px] text-slate-400">
+                                            {client.companyName}
+                                          </div>
+                                        )}
+                                      </div>
+                                    ) : (
+                                      <span className="text-slate-500 italic">Direct</span>
+                                    )
+                                  ) : (
+                                    <span className="text-slate-300">{t.vendor || '—'}</span>
+                                  )}
+                                </td>
+
+                                <td className="py-3 px-4 text-slate-400 font-mono text-[11px]">
+                                  {inv ? (
+                                    <button
+                                      onClick={e => {
+                                        e.stopPropagation()
+                                        sounds.playClick()
+                                        setPreviewInvoice(inv)
+                                      }}
+                                      className="hover:text-emerald-300 transition text-left"
+                                      title="View Invoice"
+                                    >
+                                      #{inv.invoiceNumber}
+                                    </button>
+                                  ) : t.receiptNumber ? (
+                                    <span className="text-emerald-300/80">{t.receiptNumber}</span>
+                                  ) : (
+                                    '—'
+                                  )}
+                                </td>
+
+                                <td className="py-3 px-4">
+                                  <span className="px-2 py-0.5 rounded-full bg-white/[0.06] text-slate-300 text-[10px]">
+                                    {t.paymentMethod || '—'}
+                                  </span>
+                                </td>
+
+                                <td
+                                  className={cn(
+                                    'py-3 px-4 text-right font-mono font-bold whitespace-nowrap',
+                                    isIncome ? 'text-emerald-400' : 'text-rose-300'
+                                  )}
+                                >
+                                  {isIncome ? '+' : '-'}
+                                  {formatMoney(t.amount, t.currency)}
+                                </td>
+
+                                <td
+                                  className="py-3 px-4 text-right"
+                                  onClick={e => e.stopPropagation()}
+                                >
+                                  <div className="flex items-center justify-end gap-1">
+                                    {isIncome && (
+                                      <button
+                                        onClick={() => {
+                                          sounds.playClick()
+                                          setPreviewReceipt(t)
+                                        }}
+                                        className="p-1.5 rounded-xl hover:bg-white/10 text-slate-400 hover:text-white transition"
+                                        title="View / Print Receipt"
+                                      >
+                                        <Printer className="w-3.5 h-3.5" />
+                                      </button>
+                                    )}
+                                    <button
+                                      onClick={() => handleEditTransaction(t)}
+                                      className="p-1.5 rounded-xl hover:bg-white/10 text-slate-400 hover:text-white transition"
+                                      title="Edit Transaction"
+                                    >
+                                      <Edit2 className="w-3.5 h-3.5" />
+                                    </button>
+                                    <button
+                                      onClick={() => handleDeleteTransaction(t)}
+                                      className="p-1.5 rounded-xl hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 transition"
+                                      title="Delete Transaction"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            )
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         ) : (
           /* ==================== 6. SETTINGS SCREEN ==================== */
@@ -2425,178 +2777,259 @@ export default function FinanceApp({ initialInvoiceId, initialClientId }: Financ
         </div>
       </GlassModal>
 
-      {/* RECORD PAYMENT MODAL */}
+      {/* UNIFIED TRANSACTION MODAL (Money In / Money Out) */}
       <GlassModal
-        isOpen={isRecordPaymentOpen}
-        onClose={() => setIsRecordPaymentOpen(false)}
-        title="Record Client Payment"
+        isOpen={isTxnModalOpen}
+        onClose={() => setIsTxnModalOpen(false)}
+        title={
+          <div className="flex items-center gap-2">
+            <span>{editingTxnId ? 'Edit Transaction' : 'Record Transaction'}</span>
+          </div>
+        }
         maxWidth="max-w-md"
       >
-        <div className="space-y-3 text-xs">
-          <div>
-            <label className="block font-semibold text-slate-300 mb-1">Apply to Invoice</label>
-            <select
-              value={payInvoiceId}
-              onChange={e => {
-                const id = e.target.value
-                setPayInvoiceId(id)
-                const inv = invoices.find(i => i.id === id)
-                if (inv) {
-                  const invPayments = payments.filter(p => p.invoiceId === inv.id)
-                  const paid = roundMoney(invPayments.reduce((acc, p) => acc + p.amount, 0))
-                  const bal = roundMoney(Math.max(0, inv.total - paid))
-                  setPayAmount(bal)
-                }
+        <div className="space-y-4 text-xs">
+          {/* Direction Toggle Pills */}
+          <div className="grid grid-cols-2 gap-2 p-1 rounded-xl bg-white/[0.04] border border-white/10">
+            <button
+              type="button"
+              onClick={() => {
+                sounds.playClick()
+                setTxnType('income')
               }}
-              className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-white/10 text-white font-mono"
+              className={cn(
+                'py-2 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition',
+                txnType === 'income'
+                  ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-sm'
+                  : 'text-slate-400 hover:text-white'
+              )}
             >
-              {invoices
-                .filter(i => i.status !== 'Cancelled')
-                .map(inv => {
-                  const c = clientMap.get(inv.clientId)
-                  return (
-                    <option key={inv.id} value={inv.id}>
-                      {inv.invoiceNumber} — {c?.name || 'Client'} ({formatMoney(inv.total, inv.currency)})
-                    </option>
-                  )
-                })}
-            </select>
+              <ArrowUp className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Money In (Income)</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                sounds.playClick()
+                setTxnType('expense')
+              }}
+              className={cn(
+                'py-2 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition',
+                txnType === 'expense'
+                  ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40 shadow-sm'
+                  : 'text-slate-400 hover:text-white'
+              )}
+            >
+              <ArrowDown className="w-3.5 h-3.5 text-rose-400" />
+              <span>Money Out (Expense)</span>
+            </button>
           </div>
 
-          <div>
-            <label className="block font-semibold text-slate-300 mb-1">
-              Payment Amount ({settings?.defaultCurrency || 'AED'})
-            </label>
-            <input
-              type="number"
-              step="any"
-              value={payAmount}
-              onChange={e => setPayAmount(Number(e.target.value))}
-              className="w-full px-3 py-2 rounded-xl bg-white/[0.06] border border-white/10 text-white font-mono font-bold text-sm"
-            />
-          </div>
-
+          {/* Amount and Date */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block font-semibold text-slate-300 mb-1">Payment Date</label>
-              <input
-                type="date"
-                value={payDate}
-                onChange={e => setPayDate(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl bg-white/[0.06] border border-white/10 text-white"
-              />
-            </div>
-
-            <div>
-              <label className="block font-semibold text-slate-300 mb-1">Payment Method</label>
-              <select
-                value={payMethod}
-                onChange={e => setPayMethod(e.target.value as PaymentMethod)}
-                className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-white/10 text-white"
-              >
-                {PAYMENT_METHODS.map(m => (
-                  <option key={m} value={m}>{m}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div>
-            <label className="block font-semibold text-slate-300 mb-1">Reference / Transaction ID</label>
-            <input
-              type="text"
-              value={payRef}
-              onChange={e => setPayRef(e.target.value)}
-              placeholder="e.g. TXN-89410-ENBD"
-              className="w-full px-3 py-2 rounded-xl bg-white/[0.06] border border-white/10 text-white font-mono"
-            />
-          </div>
-
-          <div className="flex justify-end gap-2 pt-3 border-t border-white/10">
-            <GlassButton variant="ghost" size="sm" onClick={() => setIsRecordPaymentOpen(false)}>
-              Cancel
-            </GlassButton>
-            <GlassButton variant="primary" size="sm" onClick={handleSavePayment} disabled={payAmount <= 0}>
-              Save & Print Receipt
-            </GlassButton>
-          </div>
-        </div>
-      </GlassModal>
-
-      {/* NEW EXPENSE MODAL */}
-      <GlassModal
-        isOpen={isNewExpenseOpen}
-        onClose={() => setIsNewExpenseOpen(false)}
-        title="Record Expense"
-        maxWidth="max-w-md"
-      >
-        <div className="space-y-3 text-xs">
-          <div>
-            <label className="block font-semibold text-slate-300 mb-1">Description *</label>
-            <input
-              type="text"
-              value={expDesc}
-              onChange={e => setExpDesc(e.target.value)}
-              placeholder="e.g. Office rent, LexisNexis research, court fee..."
-              className="w-full px-3 py-2 rounded-xl bg-white/[0.06] border border-white/10 text-white"
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block font-semibold text-slate-300 mb-1">Category</label>
-              <select
-                value={expCategory}
-                onChange={e => setExpCategory(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-white/10 text-white"
-              >
-                {EXPENSE_CATEGORIES.map(c => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block font-semibold text-slate-300 mb-1">Amount</label>
+              <label className="block font-semibold text-slate-300 mb-1">
+                Amount ({settings?.defaultCurrency || 'AED'}) *
+              </label>
               <input
                 type="number"
                 step="any"
-                value={expAmount}
-                onChange={e => setExpAmount(Number(e.target.value))}
-                className="w-full px-3 py-2 rounded-xl bg-white/[0.06] border border-white/10 text-white font-mono font-bold"
+                value={txnAmount || ''}
+                onChange={e => setTxnAmount(Number(e.target.value))}
+                placeholder="0.00"
+                className="w-full px-3 py-2 rounded-xl bg-white/[0.06] border border-white/10 text-white font-mono font-bold text-sm focus:outline-none focus:border-emerald-400/50"
               />
             </div>
-          </div>
 
-          <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block font-semibold text-slate-300 mb-1">Date</label>
+              <label className="block font-semibold text-slate-300 mb-1">Date *</label>
               <input
                 type="date"
-                value={expDate}
-                onChange={e => setExpDate(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl bg-white/[0.06] border border-white/10 text-white"
-              />
-            </div>
-
-            <div>
-              <label className="block font-semibold text-slate-300 mb-1">Vendor / Payee</label>
-              <input
-                type="text"
-                value={expVendor}
-                onChange={e => setExpVendor(e.target.value)}
-                placeholder="e.g. Dubai Courts, Emaar..."
-                className="w-full px-3 py-2 rounded-xl bg-white/[0.06] border border-white/10 text-white"
+                value={txnDate}
+                onChange={e => setTxnDate(e.target.value)}
+                className="w-full px-3 py-2 rounded-xl bg-white/[0.06] border border-white/10 text-white focus:outline-none focus:border-emerald-400/50"
               />
             </div>
           </div>
 
+          {/* Money In Specific Fields */}
+          {txnType === 'income' ? (
+            <>
+              <div>
+                <label className="block font-semibold text-slate-300 mb-1">
+                  Client / Payee
+                </label>
+                <select
+                  value={txnClientId}
+                  onChange={e => {
+                    const cId = e.target.value
+                    setTxnClientId(cId)
+                    const openInvs = invoices.filter(i => i.clientId === cId && i.status !== 'Paid' && i.status !== 'Cancelled')
+                    if (openInvs.length > 0 && !txnInvoiceId) {
+                      setTxnInvoiceId(openInvs[0].id)
+                      const invTxns = transactions.filter(t => t.type === 'income' && t.invoiceId === openInvs[0].id)
+                      const paid = roundMoney(invTxns.reduce((acc, t) => acc + t.amount, 0))
+                      const bal = roundMoney(Math.max(0, openInvs[0].total - paid))
+                      setTxnAmount(bal)
+                      setTxnDesc(`Payment for Invoice #${openInvs[0].invoiceNumber}`)
+                    }
+                  }}
+                  className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-white/10 text-white focus:outline-none focus:border-emerald-400/50"
+                >
+                  <option value="">No Client Linked (Direct / Miscellaneous)</option>
+                  {clients.map(c => (
+                    <option key={c.id} value={c.id}>
+                      {c.name} {c.companyName ? `(${c.companyName})` : ''}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block font-semibold text-slate-300 mb-1">
+                  Link to Invoice (Optional)
+                </label>
+                <select
+                  value={txnInvoiceId}
+                  onChange={e => {
+                    const id = e.target.value
+                    setTxnInvoiceId(id)
+                    const inv = invoices.find(i => i.id === id)
+                    if (inv) {
+                      setTxnClientId(inv.clientId)
+                      const invTxns = transactions.filter(t => t.type === 'income' && t.invoiceId === inv.id)
+                      const paid = roundMoney(invTxns.reduce((acc, t) => acc + t.amount, 0))
+                      const bal = roundMoney(Math.max(0, inv.total - paid))
+                      setTxnAmount(bal)
+                      setTxnDesc(`Payment for Invoice #${inv.invoiceNumber}`)
+                    }
+                  }}
+                  className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-white/10 text-white font-mono focus:outline-none focus:border-emerald-400/50"
+                >
+                  <option value="">Direct / Unlinked Payment</option>
+                  {invoices
+                    .filter(i => i.status !== 'Cancelled')
+                    .map(inv => {
+                      const c = clientMap.get(inv.clientId)
+                      return (
+                        <option key={inv.id} value={inv.id}>
+                          #{inv.invoiceNumber} — {c?.name || 'Client'} ({formatMoney(inv.total, inv.currency)}) [{inv.status}]
+                        </option>
+                      )
+                    })}
+                </select>
+              </div>
+
+              <div>
+                <label className="block font-semibold text-slate-300 mb-1">Description</label>
+                <input
+                  type="text"
+                  value={txnDesc}
+                  onChange={e => setTxnDesc(e.target.value)}
+                  placeholder="e.g. Settlement for legal services, retainer, consultation..."
+                  className="w-full px-3 py-2 rounded-xl bg-white/[0.06] border border-white/10 text-white focus:outline-none focus:border-emerald-400/50"
+                />
+              </div>
+            </>
+          ) : (
+            /* Money Out Specific Fields */
+            <>
+              <div>
+                <label className="block font-semibold text-slate-300 mb-1">
+                  Expense Description *
+                </label>
+                <input
+                  type="text"
+                  value={txnDesc}
+                  onChange={e => setTxnDesc(e.target.value)}
+                  placeholder="e.g. Office lease, Court filing fee, Software license..."
+                  className="w-full px-3 py-2 rounded-xl bg-white/[0.06] border border-white/10 text-white focus:outline-none focus:border-emerald-400/50"
+                />
+              </div>
+            </>
+          )}
+
+          <div>
+            <label className="block font-semibold text-slate-300 mb-1">Payment Method</label>
+            <select
+              value={txnMethod}
+              onChange={e => setTxnMethod(e.target.value)}
+              className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-white/10 text-white focus:outline-none focus:border-emerald-400/50"
+            >
+              {PAYMENT_METHODS.map(m => (
+                <option key={m} value={m}>{m}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Progressive Disclosure: More Details */}
+          <div>
+            <button
+              type="button"
+              onClick={() => setShowTxnMoreDetails(prev => !prev)}
+              className="text-xs text-slate-400 hover:text-white flex items-center gap-1 font-medium transition"
+            >
+              <ChevronRight
+                className={cn('w-3.5 h-3.5 transition-transform', showTxnMoreDetails && 'rotate-90')}
+              />
+              <span>{showTxnMoreDetails ? 'Less details' : 'More details (Vendor, Reference, Notes)'}</span>
+            </button>
+
+            {showTxnMoreDetails && (
+              <div className="space-y-3 pt-3 mt-2 border-t border-white/10">
+                {txnType === 'expense' && (
+                  <div>
+                    <label className="block font-semibold text-slate-300 mb-1">Vendor / Payee</label>
+                    <input
+                      type="text"
+                      value={txnVendor}
+                      onChange={e => setTxnVendor(e.target.value)}
+                      placeholder="e.g. Emaar, Dubai Courts, Clio, DEWA..."
+                      className="w-full px-3 py-2 rounded-xl bg-white/[0.06] border border-white/10 text-white focus:outline-none focus:border-emerald-400/50"
+                    />
+                  </div>
+                )}
+
+                <div>
+                  <label className="block font-semibold text-slate-300 mb-1">
+                    Reference / Transaction ID
+                  </label>
+                  <input
+                    type="text"
+                    value={txnRef}
+                    onChange={e => setTxnRef(e.target.value)}
+                    placeholder="e.g. TXN-89410-ENBD, CHQ-1049..."
+                    className="w-full px-3 py-2 rounded-xl bg-white/[0.06] border border-white/10 text-white font-mono focus:outline-none focus:border-emerald-400/50"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-slate-300 mb-1">Internal Notes</label>
+                  <textarea
+                    rows={2}
+                    value={txnNotes}
+                    onChange={e => setTxnNotes(e.target.value)}
+                    placeholder="Optional notes or context for audit trail..."
+                    className="w-full px-3 py-2 rounded-xl bg-white/[0.06] border border-white/10 text-white focus:outline-none focus:border-emerald-400/50 resize-none"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Modal Footer */}
           <div className="flex justify-end gap-2 pt-3 border-t border-white/10">
-            <GlassButton variant="ghost" size="sm" onClick={() => setIsNewExpenseOpen(false)}>
+            <GlassButton variant="ghost" size="sm" onClick={() => setIsTxnModalOpen(false)}>
               Cancel
             </GlassButton>
-            <GlassButton variant="primary" size="sm" onClick={handleSaveExpense} disabled={!expDesc.trim() || expAmount <= 0}>
-              Save Expense
+            <GlassButton
+              variant="primary"
+              size="sm"
+              onClick={handleSaveTransaction}
+              disabled={txnAmount <= 0 || (txnType === 'expense' && !txnDesc.trim())}
+            >
+              {txnType === 'income' && !editingTxnId ? 'Save & Print Receipt' : 'Save Transaction'}
             </GlassButton>
           </div>
         </div>
@@ -2748,7 +3181,9 @@ export default function FinanceApp({ initialInvoiceId, initialClientId }: Financ
             <div className="space-y-2 font-mono">
               <div className="flex justify-between">
                 <span className="text-slate-400">Date:</span>
-                <span className="text-white">{previewReceipt.paymentDate}</span>
+                <span className="text-white">
+                  {'date' in previewReceipt ? previewReceipt.date : previewReceipt.paymentDate}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-400">Method:</span>
