@@ -250,6 +250,7 @@ export interface SearchResultItem {
     | 'collection'
     | 'collection_item'
     | 'dashboard'
+    | 'growth'
   title: string
   subtitle: string
   icon: ComponentType<{ className?: string }>

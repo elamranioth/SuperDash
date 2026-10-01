@@ -459,7 +459,11 @@ export class BackupService {
 
       // Legacy direct storage export format fallback
       if (typeof parsed === 'object' && parsed !== null) {
-        const moduleCounts = computeModuleStats(parsed)
+        const rawData = (parsed.data && typeof parsed.data === 'object') ? parsed.data : parsed
+        const moduleCounts = computeModuleStats(rawData)
+        if (Object.keys(moduleCounts).length === 0) {
+          return { valid: false, error: 'File does not contain valid SuperDash data or manifest' }
+        }
         const manifest: BackupManifest = {
           backupVersion: 1,
           superDashVersion: 'legacy',
@@ -470,7 +474,7 @@ export class BackupService {
         }
         const pkg: BackupPackage = {
           manifest,
-          data: parsed
+          data: rawData
         }
         return { valid: true, pkg, manifest }
       }

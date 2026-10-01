@@ -39,6 +39,9 @@ import GlassWidget from '@/components/LiquidGlass/GlassWidget'
 import { getAllWidgets } from '@/registry/widgetRegistry'
 import { sounds } from '@/utils/sound'
 import { Plus, Check, LayoutGrid } from 'lucide-react'
+import AppLockScreen from '@/components/Security/AppLockScreen'
+import { securityService } from '@/services/security'
+import { syncService } from '@/services/sync'
 
 export default function Dashboard() {
   const [settings, setSettings] = useState<DashboardSettings>(DEFAULT_SETTINGS)
@@ -54,6 +57,38 @@ export default function Dashboard() {
   const [activeAppId, setActiveAppId] = useState<string | null>(null)
   const [appWindowProps, setAppWindowProps] = useState<Record<string, Record<string, unknown>>>({})
   const [activeDashboard, setActiveDashboard] = useState<DashboardDefinition | null>(null)
+  const [isLocked, setIsLocked] = useState(false)
+
+  // Security and Sync services lifecycle
+  useEffect(() => {
+    // 1. Subscribe to security lock state
+    const unsubLock = securityService.subscribeLockState(locked => {
+      setIsLocked(locked)
+    })
+
+    // 2. Track activity for auto-lock timeout
+    const handleUserActivity = () => {
+      securityService.recordActivity()
+    }
+    window.addEventListener('pointerdown', handleUserActivity, { passive: true })
+    window.addEventListener('keydown', handleUserActivity, { passive: true })
+
+    const handleVisibility = () => {
+      securityService.handleVisibilityChange(document.hidden)
+    }
+    document.addEventListener('visibilitychange', handleVisibility)
+
+    // 3. Start local-first sync engine
+    syncService.start()
+
+    return () => {
+      unsubLock()
+      window.removeEventListener('pointerdown', handleUserActivity)
+      window.removeEventListener('keydown', handleUserActivity)
+      document.removeEventListener('visibilitychange', handleVisibility)
+      syncService.stop()
+    }
+  }, [])
 
   // Load settings and active dashboard on mount
   useEffect(() => {
@@ -797,6 +832,9 @@ export default function Dashboard() {
         onOpenApp={handleOpenApp}
         onRestoreApp={handleRestoreApp}
       />
+
+      {/* App Lock Protection Screen */}
+      {isLocked && <AppLockScreen onUnlocked={() => setIsLocked(false)} />}
     </div>
   )
 }

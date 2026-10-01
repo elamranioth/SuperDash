@@ -20,7 +20,8 @@ import {
   CheckCircle2,
   Upload,
   Grid,
-  Bell
+  Bell,
+  Shield
 } from 'lucide-react'
 import {
   DashboardSettings,
@@ -35,6 +36,7 @@ import AppHeader from '@/components/AppWindow/AppHeader'
 import GlassPanel from '@/components/LiquidGlass/GlassPanel'
 import UpdatesApp from '@/apps/updates/UpdatesApp'
 import DataBackupSettings from '@/apps/settings/DataBackupSettings'
+import SecuritySettings from '@/apps/settings/SecuritySettings'
 import AboutDiagnosticsSettings from '@/apps/settings/AboutDiagnosticsSettings'
 import { updateService } from '@/services/updateService'
 
@@ -63,6 +65,7 @@ export type SettingsTabId =
   | 'apps'
   | 'notifications'
   | 'data'
+  | 'security'
   | 'updates'
   | 'accessibility'
   | 'about'
@@ -178,6 +181,12 @@ export default function SettingsApp({
       label: 'Data & Backup',
       desc: 'MEGA Sync, Export & Restore',
       icon: HardDrive
+    },
+    {
+      id: 'security' as SettingsTabId,
+      label: 'Security & Privacy',
+      desc: 'App Lock, Screen Privacy & Encryption',
+      icon: Shield
     },
     {
       id: 'updates' as SettingsTabId,
@@ -516,6 +525,9 @@ export default function SettingsApp({
 
       case 'data':
         return <DataBackupSettings />
+
+      case 'security':
+        return <SecuritySettings />
 
       case 'updates':
         return <UpdatesApp isEmbedded={true} onOpenApp={onOpenApp} />

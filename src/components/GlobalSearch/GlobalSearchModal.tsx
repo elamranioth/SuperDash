@@ -19,7 +19,8 @@ import {
   Lightbulb,
   BookMarked,
   BookOpen,
-  Quote as QuoteIcon
+  Quote as QuoteIcon,
+  TrendingUp
 } from 'lucide-react'
 import { getRegisteredApps } from '@/registry/appRegistry'
 import { storageService, INITIAL_NOTES, INITIAL_TASKS, INITIAL_CALENDAR_EVENTS, INITIAL_REMINDERS, INITIAL_DOCUMENTS } from '@/services/storage'
@@ -33,6 +34,8 @@ import { readerRepository, annotationService } from '@/services/reader'
 import { liveRepository, HUMAN_VOICES } from '@/services/live'
 import { collectionsRepository } from '@/services/collections'
 import { dashboardRepository } from '@/services/dashboardBuilder'
+import { growthService } from '@/services/growth'
+import { Lead } from '@/types/growth'
 import {
   NoteItem,
   TaskItem,
@@ -88,6 +91,7 @@ export default function GlobalSearchModal({
   const [collections, setCollections] = useState<Collection[]>([])
   const [collectionItems, setCollectionItems] = useState<CollectionItem[]>([])
   const [dashboards, setDashboards] = useState<DashboardDefinition[]>([])
+  const [growthLeads, setGrowthLeads] = useState<Lead[]>([])
 
   useEffect(() => {
     if (isOpen) {
@@ -103,6 +107,7 @@ export default function GlobalSearchModal({
       decisionService.getAll().then(setDecisions)
       readerRepository.getAllArticles().then(setReaderArticles)
       annotationService.getQuotes().then(setReaderQuotes)
+      growthService.getLeads().then(setGrowthLeads)
       // Check privacy preference: only load if user explicitly opted in
       liveRepository.getPreferences().then(prefs => {
         if (prefs.includeMemoriesInSearch) {
@@ -655,6 +660,31 @@ export default function GlobalSearchModal({
             action: () => {
               sounds.playClick()
               dashboardRepository.setActiveDashboard(dash.id)
+              onClose()
+            }
+          })
+        }
+      })
+
+      // Growth Leads
+      growthLeads.forEach(lead => {
+        if (
+          lead.name.toLowerCase().includes(q) ||
+          (lead.company && lead.company.toLowerCase().includes(q)) ||
+          (lead.serviceInterest && lead.serviceInterest.toLowerCase().includes(q)) ||
+          (lead.notes && lead.notes.toLowerCase().includes(q))
+        ) {
+          items.push({
+            id: `growth-${lead.id}`,
+            type: 'growth',
+            title: `${lead.name}${lead.company ? ` • ${lead.company}` : ''}`,
+            subtitle: `${lead.serviceInterest || 'Lead'} • Stage: ${lead.stage}`,
+            icon: TrendingUp,
+            categoryLabel: 'Growth',
+            badge: lead.stage,
+            action: () => {
+              sounds.playClick()
+              onOpenApp('growth', { initialLeadId: lead.id, initialView: 'leads' })
               onClose()
             }
           })

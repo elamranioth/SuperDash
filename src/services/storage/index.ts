@@ -21,10 +21,16 @@ export interface IStorageService {
 
 class LocalStorageService implements IStorageService {
   private prefix = 'superdash_'
+  private memoryFallback = new Map<string, string>()
+
+  private isAvailable(): boolean {
+    return typeof localStorage !== 'undefined'
+  }
 
   async get<T>(key: string, defaultValue: T): Promise<T> {
     try {
-      const item = localStorage.getItem(this.prefix + key)
+      const fullKey = this.prefix + key
+      const item = this.isAvailable() ? localStorage.getItem(fullKey) : this.memoryFallback.get(fullKey) ?? null
       if (item === null) return defaultValue
       const parsed = JSON.parse(item)
       // Merge with default if object to guarantee new fields are present
@@ -40,7 +46,13 @@ class LocalStorageService implements IStorageService {
 
   async set<T>(key: string, value: T): Promise<void> {
     try {
-      localStorage.setItem(this.prefix + key, JSON.stringify(value))
+      const fullKey = this.prefix + key
+      const serialized = JSON.stringify(value)
+      if (this.isAvailable()) {
+        localStorage.setItem(fullKey, serialized)
+      } else {
+        this.memoryFallback.set(fullKey, serialized)
+      }
     } catch (e) {
       console.error(`Error writing ${key} to storage:`, e)
     }
@@ -48,7 +60,12 @@ class LocalStorageService implements IStorageService {
 
   async remove(key: string): Promise<void> {
     try {
-      localStorage.removeItem(this.prefix + key)
+      const fullKey = this.prefix + key
+      if (this.isAvailable()) {
+        localStorage.removeItem(fullKey)
+      } else {
+        this.memoryFallback.delete(fullKey)
+      }
     } catch (e) {
       console.error(`Error removing ${key} from storage:`, e)
     }
@@ -56,14 +73,18 @@ class LocalStorageService implements IStorageService {
 
   async clear(): Promise<void> {
     try {
-      const keysToRemove: string[] = []
-      for (let i = 0; i < localStorage.length; i++) {
-        const k = localStorage.key(i)
-        if (k && k.startsWith(this.prefix)) {
-          keysToRemove.push(k)
+      if (this.isAvailable()) {
+        const keysToRemove: string[] = []
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i)
+          if (k && k.startsWith(this.prefix)) {
+            keysToRemove.push(k)
+          }
         }
+        keysToRemove.forEach((k) => localStorage.removeItem(k))
+      } else {
+        this.memoryFallback.clear()
       }
-      keysToRemove.forEach((k) => localStorage.removeItem(k))
     } catch (e) {
       console.error('Error clearing storage:', e)
     }
@@ -71,14 +92,26 @@ class LocalStorageService implements IStorageService {
 
   async exportAll(): Promise<Record<string, unknown>> {
     const result: Record<string, unknown> = {}
-    for (let i = 0; i < localStorage.length; i++) {
-      const k = localStorage.key(i)
-      if (k && k.startsWith(this.prefix)) {
-        try {
-          const raw = localStorage.getItem(k)
-          result[k.replace(this.prefix, '')] = raw ? JSON.parse(raw) : null
-        } catch {
-          // ignore corrupted keys
+    if (this.isAvailable()) {
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i)
+        if (k && k.startsWith(this.prefix)) {
+          try {
+            const raw = localStorage.getItem(k)
+            result[k.replace(this.prefix, '')] = raw ? JSON.parse(raw) : null
+          } catch {
+            // ignore corrupted keys
+          }
+        }
+      }
+    } else {
+      for (const [k, raw] of this.memoryFallback.entries()) {
+        if (k.startsWith(this.prefix)) {
+          try {
+            result[k.replace(this.prefix, '')] = JSON.parse(raw)
+          } catch {
+            // ignore
+          }
         }
       }
     }

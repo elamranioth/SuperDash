@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Info,
   Copy,
@@ -19,14 +19,24 @@ import {
   SUPERDASH_GITHUB_REPO,
   getAppPlatform
 } from '@/version'
-import { STORAGE_SCHEMA_VERSION } from '@/services/backup'
+import { STORAGE_SCHEMA_VERSION, backupService, BackupSettings } from '@/services/backup'
+import { syncService, SyncSettings } from '@/services/sync'
 import { DIAGNOSTIC_ERRORS } from '@/components/Common/AppErrorBoundary'
 import { sounds } from '@/utils/sound'
 import GlassPanel from '@/components/LiquidGlass/GlassPanel'
 
 export default function AboutDiagnosticsSettings() {
   const [copied, setCopied] = useState(false)
+  const [backupSettings, setBackupSettings] = useState<BackupSettings | null>(null)
+  const [syncSettings, setSyncSettings] = useState<SyncSettings | null>(null)
+  const [pendingSync, setPendingSync] = useState(0)
   const platform = getAppPlatform()
+
+  useEffect(() => {
+    backupService.getSettings().then(setBackupSettings)
+    syncService.getSettings().then(setSyncSettings)
+    syncService.getPendingCount().then(setPendingSync)
+  }, [])
 
   const generateDiagnosticText = () => {
     const swState = typeof navigator !== 'undefined' && 'serviceWorker' in navigator && navigator.serviceWorker.controller
@@ -42,6 +52,12 @@ export default function AboutDiagnosticsSettings() {
       `Storage Schema: v${STORAGE_SCHEMA_VERSION}`,
       `GitHub Repository: ${SUPERDASH_GITHUB_REPO}`,
       `Service Worker: ${swState}`,
+      `Sync Status: ${syncService.getSyncStatus()}`,
+      `Pending Sync Mutations: ${pendingSync}`,
+      `Last Successful Sync: ${syncSettings?.lastSyncTimestamp ? new Date(syncSettings.lastSyncTimestamp).toISOString() : 'Never'}`,
+      `Backup Destination: ${backupSettings?.lastBackupLocation || 'Browser Downloads'}`,
+      `Last Successful Backup: ${backupSettings?.lastBackupDate ? backupSettings.lastBackupDate : 'None'}`,
+      `Auto-Backup Frequency: ${backupSettings?.autoBackup || 'daily'}`,
       `User Agent: ${typeof navigator !== 'undefined' ? navigator.userAgent : 'Unknown'}`,
       `Recent App Errors (${DIAGNOSTIC_ERRORS.length}):`
     ]

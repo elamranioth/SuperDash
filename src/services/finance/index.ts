@@ -17,6 +17,9 @@ export function roundMoney(amount: number): number {
 }
 
 export function formatMoney(amount: number, currency = 'AED'): string {
+  if (typeof amount !== 'number' || isNaN(amount) || !isFinite(amount)) {
+    return `${currency} 0.00`
+  }
   const rounded = roundMoney(amount)
   return `${currency} ${rounded.toLocaleString(undefined, {
     minimumFractionDigits: 2,

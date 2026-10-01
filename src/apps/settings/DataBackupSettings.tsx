@@ -22,6 +22,12 @@ import {
   BackupPackage,
   BackupManifest
 } from '@/services/backup'
+import {
+  syncService,
+  SyncStatus,
+  SyncConflict,
+  ConflictResolution
+} from '@/services/sync'
 import { sounds } from '@/utils/sound'
 import GlassPanel from '@/components/LiquidGlass/GlassPanel'
 import GlassModal from '@/components/LiquidGlass/GlassModal'
@@ -39,6 +45,14 @@ export default function DataBackupSettings() {
   const [restoring, setRestoring] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  // Cross-Device Synchronization State
+  const [syncStatus, setSyncStatus] = useState<SyncStatus>('synced')
+  const [pendingSyncCount, setPendingSyncCount] = useState<number>(0)
+  const [lastSyncTimestamp, setLastSyncTimestamp] = useState<number | undefined>(undefined)
+  const [conflicts, setConflicts] = useState<SyncConflict[]>([])
+  const [syncing, setSyncing] = useState(false)
+  const [deviceId, setDeviceId] = useState('')
+
   const isFsaSupported = backupService.isFileSystemAccessSupported()
 
   useEffect(() => {
@@ -46,7 +60,55 @@ export default function DataBackupSettings() {
       setSettings(s)
       setLoading(false)
     })
+    syncService.getSettings().then(s => {
+      setDeviceId(s.deviceId)
+      setLastSyncTimestamp(s.lastSyncTimestamp)
+    })
+    syncService.getPendingCount().then(setPendingSyncCount)
+    syncService.getConflicts().then(setConflicts)
+    const unsubSync = syncService.subscribe(st => {
+      setSyncStatus(st)
+      syncService.getPendingCount().then(setPendingSyncCount)
+      syncService.getConflicts().then(setConflicts)
+    })
+    return () => unsubSync()
   }, [])
+
+  const handleSyncNow = async () => {
+    sounds.playClick()
+    setSyncing(true)
+    const res = await syncService.syncNow()
+    setSyncing(false)
+    if (res.success) {
+      sounds.playSuccess()
+      setFeedback({
+        type: 'success',
+        message: `Sync complete: ${res.pushed} sent, ${res.pulled} received`
+      })
+      const s = await syncService.getSettings()
+      setLastSyncTimestamp(s.lastSyncTimestamp)
+      setPendingSyncCount(await syncService.getPendingCount())
+      setConflicts(await syncService.getConflicts())
+    } else {
+      setFeedback({
+        type: 'error',
+        message: res.error || 'Sync encountered an error'
+      })
+    }
+    setTimeout(() => setFeedback(null), 5000)
+  }
+
+  const handleResolveConflict = async (conflictId: string, resolution: ConflictResolution) => {
+    sounds.playClick()
+    await syncService.resolveConflict(conflictId, resolution)
+    sounds.playSuccess()
+    setConflicts(await syncService.getConflicts())
+    setFeedback({
+      type: 'success',
+      message: 'Conflict resolved successfully'
+    })
+    setTimeout(() => setFeedback(null), 4000)
+  }
 
   const handlePerformBackup = async () => {
     sounds.playClick()
@@ -251,6 +313,108 @@ export default function DataBackupSettings() {
           <span>{feedback.message}</span>
         </div>
       )}
+
+      {/* Cross-Device Synchronization */}
+      <GlassPanel className="p-4 sm:p-5 space-y-3.5">
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-400">
+            <RefreshCw className={`w-4 h-4 text-indigo-400 ${syncing ? 'animate-spin' : ''}`} />
+            <span>Cross-Device Synchronization</span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span
+              className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${
+                syncStatus === 'synced'
+                  ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+                  : syncStatus === 'syncing'
+                  ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30 animate-pulse'
+                  : syncStatus === 'pending'
+                  ? 'bg-sky-500/20 text-sky-300 border-sky-500/30'
+                  : syncStatus === 'offline'
+                  ? 'bg-amber-500/20 text-amber-300 border-amber-500/30'
+                  : 'bg-rose-500/20 text-rose-300 border-rose-500/30'
+              }`}
+            >
+              {syncStatus === 'synced' && <Check className="w-3 h-3" />}
+              <span className="capitalize">{syncStatus}</span>
+            </span>
+
+            <button
+              onClick={handleSyncNow}
+              disabled={syncing}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/15 active:scale-95 border border-white/10 text-xs font-semibold text-slate-200 transition disabled:opacity-50"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${syncing ? 'animate-spin' : ''}`} />
+              <span>Sync Now</span>
+            </button>
+          </div>
+        </div>
+
+        <p className="text-xs text-slate-300 leading-relaxed">
+          SuperDash is <strong className="text-white">Local-First</strong>. Your actions save locally immediately, and pending modifications sync automatically across your active devices when connected to network.
+        </p>
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-xs">
+          <div className="p-2.5 rounded-xl bg-black/40 border border-white/5">
+            <div className="text-[10px] text-slate-400 uppercase font-semibold">Queued Changes</div>
+            <div className="text-sm font-mono font-bold text-white mt-0.5">{pendingSyncCount}</div>
+          </div>
+          <div className="p-2.5 rounded-xl bg-black/40 border border-white/5">
+            <div className="text-[10px] text-slate-400 uppercase font-semibold">Last Synced</div>
+            <div className="text-xs font-medium text-slate-200 mt-0.5">
+              {lastSyncTimestamp ? new Date(lastSyncTimestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Pending'}
+            </div>
+          </div>
+          <div className="p-2.5 rounded-xl bg-black/40 border border-white/5 col-span-2 sm:col-span-1">
+            <div className="text-[10px] text-slate-400 uppercase font-semibold">Device Identity</div>
+            <div className="text-xs font-mono text-indigo-300 truncate mt-0.5">{deviceId || 'Local'}</div>
+          </div>
+        </div>
+
+        {/* Sync Conflicts Section if Any */}
+        {conflicts.length > 0 && (
+          <div className="p-3.5 rounded-xl bg-amber-500/15 border border-amber-500/30 space-y-3">
+            <div className="flex items-center gap-2 text-xs font-bold text-amber-300">
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              <span>{conflicts.length} Sync Conflict{conflicts.length > 1 ? 's' : ''} Detected</span>
+            </div>
+            <p className="text-[11px] text-amber-200/90 leading-relaxed">
+              These items were edited on two different devices while offline. Choose which version to retain or preserve both.
+            </p>
+            <div className="space-y-2">
+              {conflicts.map(conf => (
+                <div key={conf.id} className="p-2.5 rounded-lg bg-black/50 border border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div className="text-xs">
+                    <span className="font-semibold text-white uppercase text-[10px] bg-white/10 px-1.5 py-0.5 rounded mr-1.5">{conf.entityType}</span>
+                    <span className="text-slate-300">{conf.title}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <button
+                      onClick={() => handleResolveConflict(conf.id, 'keep_local')}
+                      className="px-2.5 py-1 rounded bg-white/10 hover:bg-white/20 text-[11px] text-white font-medium"
+                    >
+                      Keep This Device
+                    </button>
+                    <button
+                      onClick={() => handleResolveConflict(conf.id, 'keep_remote')}
+                      className="px-2.5 py-1 rounded bg-white/10 hover:bg-white/20 text-[11px] text-white font-medium"
+                    >
+                      Keep Other
+                    </button>
+                    <button
+                      onClick={() => handleResolveConflict(conf.id, 'keep_both')}
+                      className="px-2.5 py-1 rounded bg-indigo-600/40 hover:bg-indigo-600/60 border border-indigo-400/40 text-[11px] text-indigo-200 font-semibold"
+                    >
+                      Keep Both
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </GlassPanel>
 
       {/* Primary Section: MEGA Sync / Backup Destination */}
       <GlassPanel className="p-4 sm:p-5 space-y-3.5">

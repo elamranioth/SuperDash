@@ -1328,8 +1328,13 @@ function PlaybookView({ onNavigate }: { onNavigate: (view: ActiveView) => void }
 
 // ─── Main GrowthApp ────────────────────────────────────────────────────────────
 
-export default function GrowthApp() {
-  const [activeView, setActiveView] = useState<ActiveView>('today')
+interface GrowthAppProps {
+  initialLeadId?: string
+  initialView?: ActiveView
+}
+
+export default function GrowthApp({ initialLeadId, initialView }: GrowthAppProps = {}) {
+  const [activeView, setActiveView] = useState<ActiveView>(initialView || (initialLeadId ? 'leads' : 'today'))
 
   const navItems: { id: ActiveView; label: string; icon: React.ElementType }[] = [
     { id: 'today', label: 'Today', icon: Zap },
