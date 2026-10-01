@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Redirecting to SuperDash...</title>
+  <meta http-equiv="refresh" content="0; url=/SuperDash/">
+  <script>
+    var path = window.location.pathname;
+    if (path.toLowerCase().includes('superdash')) {
+      window.location.replace('/SuperDash/' + window.location.search + window.location.hash);
+    } else {
+      window.location.replace('/SuperDash/');
+    }
+  </script>
+</head>
+<body style="background-color: #0a0b10; color: #fff; font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0;">
+  <p>Redirecting to <a href="/SuperDash/" style="color: #6366f1;">SuperDash</a>...</p>
+</body>
+</html>
