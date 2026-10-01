@@ -1,0 +1,42 @@
+{
+  "version": "1.7.0",
+  "releaseDate": "2026-10-01",
+  "title": "SuperDash 1.7 — Growth Application & Android Update Engine",
+  "summary": "Introduced the brand-new Growth application (leads pipeline, relationship care, playbook & referrals), refined native Android APK update engine with live background downloads, and performance optimizations.",
+  "minAppVersion": "1.0.0",
+  "downloadUrl": "https://elamranioth.github.io/SuperDash/SuperDash.apk",
+  "apkDownloadUrl": "https://elamranioth.github.io/SuperDash/SuperDash.apk",
+  "highlights": [
+    "Brand new 'Growth' app: Leads pipeline, client relationship tracking, actionable playbooks & referral loop",
+    "Completely fixed Android update engine: Direct system download & automatic package installation",
+    "Live remote update checking across all Android versions",
+    "Liquid Glass Quick Controls Bottom Sheet from mobile header",
+    "Original SuperDash OS-grade squircle icons across all applications"
+  ],
+  "changes": [
+    {
+      "appId": "growth",
+      "appName": "Growth",
+      "type": "NEW",
+      "description": "Marketing and client-retention app: Today action dashboard, lightweight leads pipeline, client relationship timeline, and 10 practical playbooks."
+    },
+    {
+      "appId": "updates",
+      "appName": "Updates Engine",
+      "type": "FIXED",
+      "description": "Resolved Android download issues with native DownloadManager integration, direct APK fallback, and live remote manifest queries."
+    },
+    {
+      "appId": "home",
+      "appName": "Home Screen",
+      "type": "IMPROVED",
+      "description": "Simplified Home composition: compact header, universal search, clean 4-column grid with Growth icon."
+    },
+    {
+      "appId": "controlcenter",
+      "appName": "Quick Controls",
+      "type": "IMPROVED",
+      "description": "Header sliders button opens a native Liquid Glass Bottom Sheet without shifting or expanding the header."
+    }
+  ]
+}

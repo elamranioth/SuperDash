@@ -1,0 +1,63 @@
+[
+  {
+    "version": "1.7.0",
+    "releaseDate": "2026-10-01",
+    "title": "SuperDash 1.7 — Growth Application & Android Update Engine",
+    "summary": "Introduced the brand-new Growth application (leads pipeline, relationship care, playbook & referrals), refined native Android APK update engine with live background downloads, and performance optimizations.",
+    "highlights": [
+      "Brand new 'Growth' app: Leads pipeline, client relationship tracking, actionable playbooks & referral loop",
+      "Completely fixed Android update engine: Direct system download & automatic package installation",
+      "Live remote update checking across all Android versions",
+      "Liquid Glass Quick Controls Bottom Sheet from mobile header",
+      "Original SuperDash OS-grade squircle icons across all applications"
+    ]
+  },
+  {
+    "version": "1.6.0",
+    "releaseDate": "2026-09-30",
+    "title": "SuperDash 1.6 — Mobile Minimalism, Premium Icons & Quick Controls",
+    "summary": "Refined mobile home screen with Liquid Glass Quick Controls bottom sheet, pristine 4-column app launcher, brand-new OS-grade squircle icons, zero-clutter layout, and real in-app APK streaming downloads.",
+    "highlights": [
+      "Native Liquid Glass Quick Controls Bottom Sheet from mobile header",
+      "Clean Minimalist Home: removed markets strip and cluttered category rail",
+      "Original SuperDash OS-grade squircle icons with directional lighting and specular bevels",
+      "Evenly spaced 4-column responsive app launcher grid",
+      "In-App update download engine with live byte progress tracking and APK install intent"
+    ]
+  },
+  {
+    "version": "1.5.0",
+    "releaseDate": "2026-09-30",
+    "title": "SuperDash 1.5 — Android & Mobile Experience Overhaul",
+    "summary": "Full mobile responsiveness redesign across all 21 applications, seamless touch navigation, bottom sheet drawers, safe-area layout insets, and the brand-new Updates center.",
+    "highlights": [
+      "Complete Mobile Responsive Redesign for all 21 applications",
+      "Liquid Glass Bottom Sheet drawers for mobile phones",
+      "Clean Home greeting with decorative top clock removed",
+      "Brand new Updates mini-app with per-app changelogs and release history"
+    ]
+  },
+  {
+    "version": "1.4.0",
+    "releaseDate": "2026-09-29",
+    "title": "SuperDash 1.4 — Collections & Dashboard Builder",
+    "summary": "Introduced Collections (curation app for notes, articles, quotes, links) and visual Dashboard Builder with drag-and-drop widget arrangement.",
+    "highlights": [
+      "Added Collections application",
+      "Added Dashboard Builder application",
+      "Liquid Glass multi-dashboard workspace switching",
+      "Integrated Live atmosphere app"
+    ]
+  },
+  {
+    "version": "1.0.0",
+    "releaseDate": "2026-09-20",
+    "title": "SuperDash 1.0 — Initial Release",
+    "summary": "Personal mini-operating system with modular dashboard, widgets, and 18 core personal productivity applications.",
+    "highlights": [
+      "Liquid Glass desktop shell with window management",
+      "Finance, Notes, Calendar, Tasks, Timer, Reader, and Hearings apps",
+      "Offline-first localStorage persistence with zero lock-in"
+    ]
+  }
+]
