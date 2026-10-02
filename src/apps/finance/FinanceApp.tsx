@@ -66,10 +66,13 @@ import {
   List,
   MoreVertical,
   ArrowUp,
-  ArrowDown
+  ArrowDown,
+  BookOpen,
+  Sparkles
 } from 'lucide-react'
+import LearnView from './learn/LearnView'
 
-type TabView = 'overview' | 'clients' | 'invoices' | 'transactions' | 'settings'
+type TabView = 'overview' | 'clients' | 'invoices' | 'transactions' | 'settings' | 'learn'
 
 const PAYMENT_METHODS: PaymentMethod[] = [
   'Bank Transfer',
@@ -914,7 +917,9 @@ export default function FinanceApp({ initialInvoiceId, initialClientId }: Financ
         icon={Wallet}
         gradient="from-emerald-500 to-teal-600"
         primaryAction={
-          activeTab === 'invoices'
+          activeTab === 'learn' || activeTab === 'settings'
+            ? undefined
+            : activeTab === 'invoices'
             ? {
                 label: 'New Invoice',
                 icon: Plus,
@@ -990,6 +995,27 @@ export default function FinanceApp({ initialInvoiceId, initialClientId }: Financ
               </select>
             </div>
           )}
+
+          {/* Small attractive Learn Button */}
+          <button
+            onClick={() => {
+              sounds.playClick()
+              setActiveTab(activeTab === 'learn' ? 'overview' : 'learn')
+            }}
+            className={cn(
+              'px-2.5 py-1.5 rounded-xl border text-xs transition flex items-center gap-1.5 font-medium',
+              activeTab === 'learn'
+                ? 'bg-emerald-500/25 text-emerald-200 border-emerald-500/50 shadow-sm'
+                : 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/20'
+            )}
+            title="Finance Knowledge Library"
+          >
+            <BookOpen className="w-3.5 h-3.5 text-emerald-400" />
+            <span className="text-[11px] font-semibold">Learn</span>
+            <span className="text-[9px] px-1 py-0.2 rounded-full bg-emerald-400/20 text-emerald-300 font-mono">
+              335+
+            </span>
+          </button>
 
           <button
             onClick={() => {
@@ -1184,6 +1210,40 @@ export default function FinanceApp({ initialInvoiceId, initialClientId }: Financ
                     Net Margin: <strong className="text-white">{formatMoney(overviewStats.netCashIncome)}</strong>
                   </div>
                 </div>
+              </div>
+            </GlassPanel>
+
+            {/* Attractive Micro-Learning Knowledge Highlight in Overview */}
+            <GlassPanel
+              intensity="subtle"
+              onClick={() => {
+                sounds.playClick()
+                setActiveTab('learn')
+              }}
+              className="p-3.5 md:p-4 rounded-3xl border-emerald-500/30 bg-gradient-to-r from-emerald-500/[0.08] via-indigo-500/[0.04] to-transparent hover:border-emerald-500/50 transition cursor-pointer flex items-center justify-between gap-3 group relative overflow-hidden"
+            >
+              <div className="glass-specular" />
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="p-2.5 rounded-2xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 shrink-0 group-hover:scale-105 transition">
+                  <BookOpen className="w-4 h-4" />
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs md:text-sm font-bold text-white group-hover:text-emerald-300 transition">
+                      Finance Micro-Learning Library
+                    </span>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-medium font-mono">
+                      14 Topics • 335 Lessons
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-400 truncate">
+                    60-second answers: Money basics, investing, stocks, bonds, banking, real estate & economics.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-1 text-xs text-emerald-300 font-semibold shrink-0 group-hover:translate-x-0.5 transition">
+                <span className="hidden sm:inline">Explore Learn</span>
+                <ChevronRight className="w-4 h-4" />
               </div>
             </GlassPanel>
 
@@ -2411,7 +2471,7 @@ export default function FinanceApp({ initialInvoiceId, initialClientId }: Financ
               </div>
             )}
           </div>
-        ) : (
+        ) : activeTab === 'settings' ? (
           /* ==================== 6. SETTINGS SCREEN ==================== */
           <div className="max-w-2xl mx-auto space-y-6">
             <GlassPanel intensity="subtle" className="p-5 md:p-6 space-y-4">
@@ -2522,7 +2582,10 @@ export default function FinanceApp({ initialInvoiceId, initialClientId }: Financ
               </div>
             </GlassPanel>
           </div>
-        )}
+        ) : activeTab === 'learn' ? (
+          /* ==================== 7. LEARN SCREEN ==================== */
+          <LearnView onBackToOverview={() => setActiveTab('overview')} />
+        ) : null}
       </div>
 
       {/* ==================== MODALS ==================== */}
