@@ -55,6 +55,60 @@ interface PlanAppProps {
   onOpenApp?: (appId: string, customProps?: Record<string, unknown>) => void
 }
 
+/**
+ * Cohesive unified Add Task vector icon
+ * Checkbox geometry with integrated plus in the bottom right corner
+ */
+export function AddTaskIcon({ className = 'w-5 h-5 text-teal-400' }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      {/* Checkbox frame with bottom-right corner open for integrated plus */}
+      <path d="M12 21H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v6" />
+      {/* Checkmark inside */}
+      <path d="m8 11.5 2.5 2.5 4.5-4.5" />
+      {/* Integrated prominent plus at bottom right */}
+      <path d="M18 15v6" strokeWidth="2.5" />
+      <path d="M15 18h6" strokeWidth="2.5" />
+    </svg>
+  )
+}
+
+/**
+ * Cohesive unified Add Note vector icon
+ * Document frame with folded corner and integrated plus at bottom right
+ */
+export function AddNoteIcon({ className = 'w-5 h-5 text-amber-400' }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      {/* Document frame */}
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h6" />
+      <path d="M14 2v6h6" />
+      <path d="M14 2c.6 0 1.2.2 1.6.6l3.8 3.8c.4.4.6 1 .6 1.6v3" />
+      <line x1="8" y1="12" x2="13" y2="12" />
+      <line x1="8" y1="16" x2="11" y2="16" />
+      {/* Integrated prominent plus at bottom right */}
+      <path d="M18 15v6" strokeWidth="2.5" />
+      <path d="M15 18h6" strokeWidth="2.5" />
+    </svg>
+  )
+}
+
 const COLOR_OPTIONS = [
   { name: 'Indigo', value: '#6366f1' },
   { name: 'Emerald', value: '#10b981' },
@@ -805,33 +859,27 @@ export default function PlanApp({
           </div>
         </div>
 
-        {/* Right: Small Compact Note / Task Shortcut (No large yellow pills or labels!) */}
+        {/* Right: Compact Cohesive Note / Task Shortcut */}
         <div className="flex items-center gap-2">
           {activeTab === 'notes' && (
             <button
               onClick={handleCreateNewNote}
-              className="p-1.5 rounded-xl bg-white/10 hover:bg-white/15 text-amber-300 hover:text-white border border-white/15 active:scale-95 transition shrink-0 relative group"
+              className="p-2 sm:p-1.5 rounded-xl bg-white/10 hover:bg-white/15 text-amber-300 hover:text-white border border-white/15 active:scale-95 transition shrink-0 min-h-[40px] min-w-[40px] sm:min-h-[36px] sm:min-w-[36px] flex items-center justify-center"
               title="New Note"
               aria-label="New Note"
             >
-              <div className="relative flex items-center justify-center">
-                <FileText className="w-4 h-4 text-amber-400" />
-                <Plus className="w-2.5 h-2.5 text-white absolute -bottom-0.5 -right-1 stroke-[3]" />
-              </div>
+              <AddNoteIcon className="w-5 h-5 text-amber-400 hover:text-amber-300 transition" />
             </button>
           )}
 
           {activeTab === 'tasks' && (
             <button
               onClick={() => quickTaskInputRef.current?.focus()}
-              className="p-1.5 rounded-xl bg-white/10 hover:bg-white/15 text-teal-300 hover:text-white border border-white/15 active:scale-95 transition shrink-0"
+              className="p-2 sm:p-1.5 rounded-xl bg-white/10 hover:bg-white/15 text-teal-300 hover:text-white border border-white/15 active:scale-95 transition shrink-0 min-h-[40px] min-w-[40px] sm:min-h-[36px] sm:min-w-[36px] flex items-center justify-center"
               title="New Task"
               aria-label="New Task"
             >
-              <div className="relative flex items-center justify-center">
-                <CheckSquare className="w-4 h-4 text-teal-400" />
-                <Plus className="w-2.5 h-2.5 text-white absolute -bottom-0.5 -right-1 stroke-[3]" />
-              </div>
+              <AddTaskIcon className="w-5 h-5 text-teal-400 hover:text-teal-300 transition" />
             </button>
           )}
         </div>
@@ -898,9 +946,9 @@ export default function PlanApp({
                 </div>
 
                 {/* Notes Scroller */}
-                <div className="flex-1 min-h-0 overflow-y-auto p-2 space-y-1.5">
+                <div className="flex-1 min-h-0 overflow-y-auto p-2 sm:p-2.5 space-y-2">
                   {filteredNotes.length === 0 ? (
-                    <div className="text-center py-12 text-slate-500 text-xs px-4">
+                    <div className="text-center py-16 text-slate-500 text-[14px] px-4 font-normal">
                       No matching notes found
                     </div>
                   ) : (
@@ -922,29 +970,29 @@ export default function PlanApp({
                             sounds.playClick()
                             setSelectedNoteId(n.id)
                           }}
-                          className={`p-3 rounded-2xl cursor-pointer transition text-left relative group border ${
+                          className={`p-3.5 sm:p-4 rounded-2xl cursor-pointer transition text-left relative group border min-h-[56px] ${
                             isSelected
                               ? 'bg-white/[0.08] border-amber-400/40 shadow-sm'
                               : 'bg-white/[0.02] hover:bg-white/[0.05] border-white/5'
                           }`}
                         >
                           <div className="flex items-start justify-between gap-2">
-                            <h4 className="text-xs font-semibold text-white truncate flex-1">
+                            <h4 className="text-[15px] sm:text-[16px] font-medium text-white truncate flex-1">
                               {n.title || 'Untitled Note'}
                             </h4>
                             {n.isPinned && (
-                              <Pin className="w-3 h-3 text-amber-400 fill-amber-400 shrink-0" />
+                              <Pin className="w-3.5 h-3.5 text-amber-400 fill-amber-400 shrink-0 mt-0.5" />
                             )}
                           </div>
 
-                          <p className="text-[11px] text-slate-400 line-clamp-1 mt-1 font-sans">
+                          <p className="text-[13px] text-slate-400 line-clamp-1 mt-1 font-sans leading-relaxed">
                             {snippet}
                           </p>
 
-                          <div className="flex items-center justify-between mt-2 text-[10px] text-slate-500">
+                          <div className="flex items-center justify-between mt-2.5 text-[12px] text-slate-500">
                             <span>{formatRelativeDate(n.updatedAt)}</span>
                             {cleanTag && (
-                              <span className="px-1.5 py-0.5 rounded-md bg-white/5 text-slate-300 font-medium">
+                              <span className="px-2 py-0.5 rounded-md bg-white/5 text-slate-300 font-normal">
                                 {cleanTag}
                               </span>
                             )}
@@ -1225,47 +1273,57 @@ export default function PlanApp({
         {/* ======================================================== */}
         {activeTab === 'tasks' && (
           <div className="flex-1 min-h-0 flex overflow-hidden">
+            {/* Mobile Backdrop Overlay - closes drawer when tapped */}
+            {isTaskSidebarOpenMobile && (
+              <div
+                onClick={() => setIsTaskSidebarOpenMobile(false)}
+                className="fixed inset-0 z-40 bg-black/60 backdrop-blur-xs md:hidden transition-opacity animate-fade-in"
+                aria-hidden="true"
+              />
+            )}
+
             {/* Tasks Navigation Sidebar (Desktop + Mobile slideout) */}
             <aside
-              className={`w-72 bg-black/30 border-r border-white/10 flex flex-col shrink-0 overflow-hidden ${
+              className={`bg-slate-950 md:bg-black/30 border-r border-white/10 flex flex-col shrink-0 overflow-hidden transition-all duration-200 ease-out ${
                 isTaskSidebarOpenMobile
-                  ? 'fixed inset-y-0 left-0 z-40 bg-slate-950/95 w-72'
-                  : 'hidden md:flex'
+                  ? 'fixed inset-y-0 left-0 z-50 w-[min(72vw,272px)] min-w-[240px] shadow-2xl'
+                  : 'hidden md:flex md:w-64'
               }`}
             >
               {/* Sidebar Header & Close on mobile */}
-              <div className="p-3 border-b border-white/10 flex items-center justify-between md:hidden">
-                <span className="text-xs font-bold text-white uppercase tracking-wider">
-                  Task Navigation
+              <div className="p-3.5 border-b border-white/10 flex items-center justify-between md:hidden">
+                <span className="text-[13px] font-semibold text-slate-300 tracking-normal">
+                  Lists
                 </span>
                 <button
                   onClick={() => setIsTaskSidebarOpenMobile(false)}
-                  className="p-1 rounded-lg text-slate-400 hover:text-white"
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 active:scale-95 transition"
+                  aria-label="Close navigation"
                 >
-                  <X className="w-4 h-4" />
+                  <X className="w-5 h-5" />
                 </button>
               </div>
 
               {/* Primary Views (Microsoft To-Do UX standard: My Day, Important, Planned, Tasks) */}
-              <div className="p-3 space-y-1 border-b border-white/10">
+              <div className="p-2 sm:p-2.5 space-y-1 border-b border-white/10">
                 <button
                   onClick={() => {
                     sounds.playClick()
                     setActiveTaskView('my-day')
                     setIsTaskSidebarOpenMobile(false)
                   }}
-                  className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition ${
+                  className={`w-full flex items-center justify-between px-3.5 py-3 rounded-xl min-h-[48px] sm:min-h-[50px] transition group ${
                     activeTaskView === 'my-day'
-                      ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30 shadow-xs'
-                      : 'text-slate-300 hover:bg-white/5'
+                      ? 'bg-amber-500/15 text-amber-200 border border-amber-500/30'
+                      : 'text-slate-200 hover:bg-white/5 border border-transparent'
                   }`}
                 >
-                  <div className="flex items-center gap-2.5">
-                    <Sun className="w-4 h-4 text-amber-400" />
-                    <span>My Day</span>
+                  <div className="flex items-center gap-3 min-w-0">
+                    <Sun className="w-5 h-5 text-amber-400 shrink-0" />
+                    <span className="text-[16px] font-medium tracking-normal truncate">My Day</span>
                   </div>
-                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-white/10 font-mono">
-                    {tasks.filter(t => t.myDay && !t.completed).length}
+                  <span className="text-[13px] font-normal text-slate-400 group-hover:text-slate-300 pl-2">
+                    {tasks.filter(t => t.myDay && !t.completed).length || ''}
                   </span>
                 </button>
 
@@ -1275,18 +1333,18 @@ export default function PlanApp({
                     setActiveTaskView('important')
                     setIsTaskSidebarOpenMobile(false)
                   }}
-                  className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition ${
+                  className={`w-full flex items-center justify-between px-3.5 py-3 rounded-xl min-h-[48px] sm:min-h-[50px] transition group ${
                     activeTaskView === 'important'
-                      ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30 shadow-xs'
-                      : 'text-slate-300 hover:bg-white/5'
+                      ? 'bg-rose-500/15 text-rose-200 border border-rose-500/30'
+                      : 'text-slate-200 hover:bg-white/5 border border-transparent'
                   }`}
                 >
-                  <div className="flex items-center gap-2.5">
-                    <Star className="w-4 h-4 text-rose-400 fill-rose-400" />
-                    <span>Important</span>
+                  <div className="flex items-center gap-3 min-w-0">
+                    <Star className="w-5 h-5 text-rose-400 fill-rose-400 shrink-0" />
+                    <span className="text-[16px] font-medium tracking-normal truncate">Important</span>
                   </div>
-                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-white/10 font-mono">
-                    {tasks.filter(t => t.important && !t.completed).length}
+                  <span className="text-[13px] font-normal text-slate-400 group-hover:text-slate-300 pl-2">
+                    {tasks.filter(t => t.important && !t.completed).length || ''}
                   </span>
                 </button>
 
@@ -1296,18 +1354,18 @@ export default function PlanApp({
                     setActiveTaskView('planned')
                     setIsTaskSidebarOpenMobile(false)
                   }}
-                  className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition ${
+                  className={`w-full flex items-center justify-between px-3.5 py-3 rounded-xl min-h-[48px] sm:min-h-[50px] transition group ${
                     activeTaskView === 'planned'
-                      ? 'bg-teal-500/20 text-teal-300 border border-teal-500/30 shadow-xs'
-                      : 'text-slate-300 hover:bg-white/5'
+                      ? 'bg-teal-500/15 text-teal-200 border border-teal-500/30'
+                      : 'text-slate-200 hover:bg-white/5 border border-transparent'
                   }`}
                 >
-                  <div className="flex items-center gap-2.5">
-                    <Calendar className="w-4 h-4 text-teal-400" />
-                    <span>Planned</span>
+                  <div className="flex items-center gap-3 min-w-0">
+                    <Calendar className="w-5 h-5 text-teal-400 shrink-0" />
+                    <span className="text-[16px] font-medium tracking-normal truncate">Planned</span>
                   </div>
-                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-white/10 font-mono">
-                    {tasks.filter(t => Boolean(t.dueDate) && !t.completed).length}
+                  <span className="text-[13px] font-normal text-slate-400 group-hover:text-slate-300 pl-2">
+                    {tasks.filter(t => Boolean(t.dueDate) && !t.completed).length || ''}
                   </span>
                 </button>
 
@@ -1317,60 +1375,61 @@ export default function PlanApp({
                     setActiveTaskView('tasks')
                     setIsTaskSidebarOpenMobile(false)
                   }}
-                  className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition ${
+                  className={`w-full flex items-center justify-between px-3.5 py-3 rounded-xl min-h-[48px] sm:min-h-[50px] transition group ${
                     activeTaskView === 'tasks'
-                      ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 shadow-xs'
-                      : 'text-slate-300 hover:bg-white/5'
+                      ? 'bg-emerald-500/15 text-emerald-200 border border-emerald-500/30'
+                      : 'text-slate-200 hover:bg-white/5 border border-transparent'
                   }`}
                 >
-                  <div className="flex items-center gap-2.5">
-                    <CheckSquare className="w-4 h-4 text-emerald-400" />
-                    <span>Tasks</span>
+                  <div className="flex items-center gap-3 min-w-0">
+                    <CheckSquare className="w-5 h-5 text-emerald-400 shrink-0" />
+                    <span className="text-[16px] font-medium tracking-normal truncate">Tasks</span>
                   </div>
-                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-white/10 font-mono">
-                    {tasks.filter(t => !t.listId && !t.completed).length}
+                  <span className="text-[13px] font-normal text-slate-400 group-hover:text-slate-300 pl-2">
+                    {tasks.filter(t => !t.listId && !t.completed).length || ''}
                   </span>
                 </button>
               </div>
 
               {/* Custom Lists Section */}
-              <div className="flex-1 min-h-0 overflow-y-auto p-3 space-y-1">
-                <div className="flex items-center justify-between px-1 mb-2">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                    Custom Lists
+              <div className="flex-1 min-h-0 overflow-y-auto p-2 sm:p-2.5 space-y-1">
+                <div className="flex items-center justify-between px-2 pt-2 pb-1.5">
+                  <span className="text-[12px] font-medium tracking-wide text-slate-400">
+                    Lists
                   </span>
                   <button
                     onClick={() => setIsCreatingList(true)}
-                    className="p-1 rounded-md text-slate-400 hover:text-white hover:bg-white/10 transition"
+                    className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition"
                     title="New List"
+                    aria-label="New List"
                   >
-                    <Plus className="w-3.5 h-3.5" />
+                    <Plus className="w-4 h-4" />
                   </button>
                 </div>
 
                 {isCreatingList && (
                   <form onSubmit={handleCreateCustomList} className="mb-2">
-                    <div className="flex items-center gap-1 bg-white/5 border border-indigo-500/40 rounded-xl p-1">
+                    <div className="flex items-center gap-1 bg-white/5 border border-indigo-500/40 rounded-xl p-1.5">
                       <input
                         type="text"
                         autoFocus
                         placeholder="List name..."
                         value={newListName}
                         onChange={e => setNewListName(e.target.value)}
-                        className="w-full bg-transparent border-none text-xs text-white px-2 py-1 focus:outline-none"
+                        className="w-full bg-transparent border-none text-[15px] text-white px-2 py-1 focus:outline-none"
                       />
                       <button
                         type="submit"
-                        className="p-1 text-emerald-400 hover:text-emerald-300"
+                        className="p-1.5 text-emerald-400 hover:text-emerald-300"
                       >
-                        <Check className="w-3.5 h-3.5" />
+                        <Check className="w-4 h-4" />
                       </button>
                       <button
                         type="button"
                         onClick={() => setIsCreatingList(false)}
-                        className="p-1 text-slate-400 hover:text-white"
+                        className="p-1.5 text-slate-400 hover:text-white"
                       >
-                        <X className="w-3.5 h-3.5" />
+                        <X className="w-4 h-4" />
                       </button>
                     </div>
                   </form>
@@ -1384,10 +1443,10 @@ export default function PlanApp({
                   return (
                     <div
                       key={list.id}
-                      className={`group flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer transition ${
+                      className={`group flex items-center justify-between px-3.5 py-3 rounded-xl min-h-[48px] sm:min-h-[50px] cursor-pointer transition ${
                         isActive
-                          ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30'
-                          : 'text-slate-300 hover:bg-white/5'
+                          ? 'bg-indigo-500/15 text-indigo-200 border border-indigo-500/30'
+                          : 'text-slate-200 hover:bg-white/5 border border-transparent'
                       }`}
                       onClick={() => {
                         sounds.playClick()
@@ -1397,7 +1456,7 @@ export default function PlanApp({
                     >
                       {isEditing ? (
                         <div
-                          className="flex items-center gap-1 flex-1"
+                          className="flex items-center gap-1 flex-1 min-w-0"
                           onClick={e => e.stopPropagation()}
                         >
                           <input
@@ -1409,25 +1468,27 @@ export default function PlanApp({
                               if (e.key === 'Enter') handleUpdateListName(list.id)
                               if (e.key === 'Escape') setEditingListId(null)
                             }}
-                            className="bg-black/40 border border-white/20 rounded px-1.5 py-0.5 text-xs text-white w-full focus:outline-none"
+                            className="bg-black/40 border border-white/20 rounded px-2 py-1 text-[15px] text-white w-full focus:outline-none"
                           />
                           <button
                             onClick={() => handleUpdateListName(list.id)}
-                            className="text-emerald-400 p-0.5"
+                            className="text-emerald-400 p-1"
                           >
-                            <Check className="w-3 h-3" />
+                            <Check className="w-4 h-4" />
                           </button>
                         </div>
                       ) : (
                         <>
-                          <div className="flex items-center gap-2 truncate flex-1 mr-2">
-                            <ListIcon className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                            <span className="truncate">{list.name}</span>
+                          <div className="flex items-center gap-3 truncate flex-1 min-w-0 mr-2">
+                            <ListIcon className="w-5 h-5 text-slate-400 shrink-0" />
+                            <span className="truncate text-[16px] font-medium tracking-normal max-w-[130px] sm:max-w-[150px]">
+                              {list.name}
+                            </span>
                           </div>
 
-                          <div className="flex items-center gap-1">
-                            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-white/10 font-mono">
-                              {count}
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <span className="text-[13px] font-normal text-slate-400 group-hover:text-slate-300">
+                              {count || ''}
                             </span>
                             <div className="hidden group-hover:flex items-center gap-0.5 ml-1">
                               <button
@@ -1439,7 +1500,7 @@ export default function PlanApp({
                                 className="p-1 text-slate-400 hover:text-white"
                                 title="Rename list"
                               >
-                                <Edit2 className="w-3 h-3" />
+                                <Edit2 className="w-3.5 h-3.5" />
                               </button>
                               <button
                                 onClick={e => {
@@ -1449,7 +1510,7 @@ export default function PlanApp({
                                 className="p-1 text-slate-400 hover:text-rose-400"
                                 title="Delete list"
                               >
-                                <Trash2 className="w-3 h-3" />
+                                <Trash2 className="w-3.5 h-3.5" />
                               </button>
                             </div>
                           </div>
@@ -1463,40 +1524,41 @@ export default function PlanApp({
               {/* Side Task Component: Preserved Focus Input Component */}
               <div className="p-3 border-t border-white/10 bg-black/40 shrink-0">
                 <div className="flex items-center gap-1.5 mb-1.5">
-                  <Target className="w-3.5 h-3.5 text-teal-400" />
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-teal-300">
+                  <Target className="w-4 h-4 text-teal-400 shrink-0" />
+                  <span className="text-[11px] font-medium tracking-wide text-teal-300">
                     Focus Objective
                   </span>
                 </div>
                 <input
                   type="text"
-                  placeholder="Set main daily priority..."
+                  placeholder="Set daily priority..."
                   value={sideFocusText}
                   onChange={e => setSideFocusText(e.target.value)}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-2.5 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-teal-400 font-sans"
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-[14px] text-white placeholder-slate-500 focus:outline-none focus:border-teal-400 font-sans"
                 />
               </div>
             </aside>
 
             {/* Main Task List Work Area */}
-            <main className="flex-1 min-h-0 flex flex-col bg-slate-950/40 overflow-hidden">
+            <main className="flex-1 min-h-0 flex flex-col bg-slate-950 md:bg-slate-950/40 overflow-hidden">
               {/* Task View Header & Search */}
-              <div className="p-3 sm:p-5 border-b border-white/10 flex items-center justify-between gap-3 shrink-0 bg-black/20">
-                <div className="flex items-center gap-2.5">
+              <div className="px-4 py-3 sm:px-6 sm:py-4 border-b border-white/10 flex items-center justify-between gap-3 shrink-0 bg-black/20">
+                <div className="flex items-center gap-3 min-w-0">
                   <button
                     onClick={() => setIsTaskSidebarOpenMobile(true)}
-                    className="md:hidden p-1.5 rounded-xl bg-white/5 text-slate-300 hover:text-white"
+                    className="md:hidden p-2 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white active:scale-95 transition shrink-0 min-h-[40px] min-w-[40px] flex items-center justify-center"
+                    aria-label="Open task navigation"
                   >
-                    <ListIcon className="w-4 h-4" />
+                    <ListIcon className="w-5 h-5" />
                   </button>
-                  <div className="p-1.5 rounded-xl bg-white/5 border border-white/10">
+                  <div className="p-2 rounded-xl bg-white/5 border border-white/10 shrink-0 hidden sm:flex items-center justify-center">
                     {getViewIcon()}
                   </div>
-                  <div>
-                    <h2 className="text-sm sm:text-base font-bold text-white tracking-tight flex items-center gap-2">
+                  <div className="min-w-0">
+                    <h2 className="text-xl sm:text-2xl font-semibold text-white tracking-tight flex items-center gap-2 truncate">
                       {getViewTitle()}
                     </h2>
-                    <span className="text-[11px] text-slate-400">
+                    <span className="text-[13px] text-slate-400 font-normal">
                       {pendingTasks.length} pending • {completedTasksList.length} completed
                     </span>
                   </div>
@@ -1504,29 +1566,29 @@ export default function PlanApp({
 
                 {/* Search Tasks */}
                 <div className="relative max-w-xs w-full hidden sm:block">
-                  <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                   <input
                     type="text"
                     placeholder="Search in view..."
                     value={taskSearchQuery}
                     onChange={e => setTaskSearchQuery(e.target.value)}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl pl-8 pr-3 py-1 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-teal-400"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl pl-9 pr-3 py-1.5 text-[14px] text-white placeholder-slate-500 focus:outline-none focus:border-teal-400"
                   />
                 </div>
               </div>
 
-              {/* Top Task Component: Preserved Quick-Add Input Form */}
+              {/* Top Task Component: Quick-Add Input Form (48-52px comfortable touch height) */}
               <div className="p-3 sm:p-5 border-b border-white/10 bg-black/30 shrink-0">
                 <form onSubmit={handleQuickAddTask} className="flex flex-col sm:flex-row gap-2">
-                  <div className="flex-1 flex items-center gap-2 bg-white/5 border border-white/10 rounded-2xl px-3 py-2 focus-within:border-teal-400/60 focus-within:bg-white/[0.08] transition">
-                    <Plus className="w-4 h-4 text-teal-400 shrink-0" />
+                  <div className="flex-1 flex items-center gap-2.5 bg-white/5 border border-white/10 rounded-2xl px-3.5 py-2.5 min-h-[48px] focus-within:border-teal-400/60 focus-within:bg-white/[0.08] transition">
+                    <AddTaskIcon className="w-5 h-5 text-teal-400 shrink-0" />
                     <input
                       ref={quickTaskInputRef}
                       type="text"
                       placeholder="Add a task... Press Enter to save"
                       value={quickTaskTitle}
                       onChange={e => setQuickTaskTitle(e.target.value)}
-                      className="w-full bg-transparent border-none text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none font-sans"
+                      className="w-full bg-transparent border-none text-[15px] sm:text-[16px] text-white placeholder-slate-500 focus:outline-none font-sans"
                     />
                   </div>
 
@@ -1535,13 +1597,13 @@ export default function PlanApp({
                       type="date"
                       value={quickTaskDueDate}
                       onChange={e => setQuickTaskDueDate(e.target.value)}
-                      className="bg-white/5 border border-white/10 rounded-xl px-2.5 py-2 text-xs text-slate-300 focus:outline-none"
+                      className="bg-white/5 border border-white/10 rounded-xl px-3 py-2 min-h-[44px] text-[13px] text-slate-300 focus:outline-none"
                     />
 
                     <select
                       value={quickTaskPriority}
                       onChange={e => setQuickTaskPriority(e.target.value as TaskPriority)}
-                      className="bg-slate-900 border border-white/10 rounded-xl px-2.5 py-2 text-xs text-slate-300 focus:outline-none"
+                      className="bg-slate-900 border border-white/10 rounded-xl px-3 py-2 min-h-[44px] text-[13px] text-slate-300 focus:outline-none"
                     >
                       <option value="low">Low</option>
                       <option value="medium">Medium</option>
@@ -1551,7 +1613,7 @@ export default function PlanApp({
                     <button
                       type="submit"
                       disabled={!quickTaskTitle.trim()}
-                      className="px-4 py-2 rounded-xl bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold text-xs disabled:opacity-30 disabled:pointer-events-none transition shadow-md shadow-teal-500/20"
+                      className="px-5 py-2 min-h-[44px] rounded-xl bg-teal-500 hover:bg-teal-400 text-slate-950 font-semibold text-[14px] disabled:opacity-30 disabled:pointer-events-none transition shadow-md shadow-teal-500/20 active:scale-95"
                     >
                       Add
                     </button>
@@ -1562,7 +1624,7 @@ export default function PlanApp({
               {/* Task Items Scrollable Canvas */}
               <div className="flex-1 min-h-0 overflow-y-auto p-3 sm:p-5 space-y-2">
                 {pendingTasks.length === 0 && completedTasksList.length === 0 ? (
-                  <div className="text-center py-16 text-slate-500 text-xs">
+                  <div className="text-center py-20 text-slate-500 text-[14px]">
                     No tasks found in this view. Use the quick-add input above to create one.
                   </div>
                 ) : (
@@ -1575,53 +1637,55 @@ export default function PlanApp({
                         <div
                           key={task.id}
                           onClick={() => setExpandedTaskId(isExpanded ? null : task.id)}
-                          className="p-3 rounded-2xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/10 transition group cursor-pointer"
+                          className="p-3.5 sm:p-4 rounded-2xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/10 transition group cursor-pointer min-h-[54px]"
                         >
-                          <div className="flex items-center gap-3">
-                            {/* Checkbox */}
+                          <div className="flex items-center gap-3.5">
+                            {/* Checkbox (comfortable 44px hit target, 22px circle) */}
                             <button
                               type="button"
                               onClick={e => toggleTaskComplete(task.id, e)}
-                              className="text-slate-400 hover:text-teal-400 transition shrink-0"
+                              className="p-1 -m-1 text-slate-400 hover:text-teal-400 active:scale-90 transition shrink-0"
+                              aria-label="Mark task complete"
                             >
-                              <Circle className="w-5 h-5" />
+                              <Circle className="w-5 h-5 sm:w-5.5 sm:h-5.5" />
                             </button>
 
-                            {/* Title & metadata */}
+                            {/* Title & metadata (Claude / Anthropic style typography) */}
                             <div className="flex-1 min-w-0">
-                              <h4 className="text-xs sm:text-sm font-medium text-white truncate">
+                              <h4 className="text-[16px] sm:text-[17px] font-normal leading-snug text-slate-100 truncate">
                                 {task.title}
                               </h4>
-                              <div className="flex items-center gap-2 mt-1 text-[10px] text-slate-400 flex-wrap">
+                              <div className="flex items-center gap-2.5 mt-1 text-[13px] text-slate-400 flex-wrap">
                                 {task.myDay && (
-                                  <span className="flex items-center gap-1 text-amber-300 font-semibold">
-                                    <Sun className="w-3 h-3" /> My Day
+                                  <span className="flex items-center gap-1 text-amber-300 font-medium">
+                                    <Sun className="w-3.5 h-3.5" /> My Day
                                   </span>
                                 )}
                                 {task.dueDate && (
-                                  <span className="flex items-center gap-1 text-teal-300">
-                                    <Calendar className="w-3 h-3" />{' '}
+                                  <span className="flex items-center gap-1 text-teal-300 font-normal">
+                                    <Calendar className="w-3.5 h-3.5" />{' '}
                                     {formatSmartDate(task.dueDate)}
                                   </span>
                                 )}
                                 {task.priority === 'high' && (
-                                  <span className="px-1.5 py-0.2 rounded bg-rose-500/20 text-rose-300 font-semibold">
+                                  <span className="px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300 font-medium text-[11px]">
                                     High Priority
                                   </span>
                                 )}
                               </div>
                             </div>
 
-                            {/* Actions: Important toggle, Note link, Delete */}
-                            <div className="flex items-center gap-1.5 shrink-0">
+                            {/* Actions: Note link, Important toggle, Delete */}
+                            <div className="flex items-center gap-1 shrink-0">
                               <button
                                 type="button"
                                 onClick={e => {
                                   e.stopPropagation()
                                   handleCreateNoteFromTask(task)
                                 }}
-                                className="p-1 rounded-lg text-slate-400 hover:text-amber-300 hover:bg-white/10 transition"
+                                className="p-2 rounded-lg text-slate-400 hover:text-amber-300 hover:bg-white/10 transition min-h-[38px] min-w-[38px] flex items-center justify-center"
                                 title="Open or create note for this task"
+                                aria-label="Open in notes"
                               >
                                 <FileText className="w-4 h-4 text-amber-400" />
                               </button>
@@ -1629,12 +1693,13 @@ export default function PlanApp({
                               <button
                                 type="button"
                                 onClick={e => toggleTaskImportant(task.id, e)}
-                                className={`p-1 rounded-lg transition ${
+                                className={`p-2 rounded-lg transition min-h-[38px] min-w-[38px] flex items-center justify-center ${
                                   task.important
                                     ? 'text-rose-400'
                                     : 'text-slate-500 hover:text-slate-300'
                                 }`}
                                 title={task.important ? 'Unmark important' : 'Mark important'}
+                                aria-label={task.important ? 'Unmark important' : 'Mark important'}
                               >
                                 <Star
                                   className={`w-4 h-4 ${task.important ? 'fill-rose-400' : ''}`}
@@ -1644,10 +1709,11 @@ export default function PlanApp({
                               <button
                                 type="button"
                                 onClick={e => deleteTask(task.id, e)}
-                                className="p-1 rounded-lg text-slate-500 hover:text-rose-400 opacity-60 group-hover:opacity-100 transition"
+                                className="p-2 rounded-lg text-slate-500 hover:text-rose-400 opacity-60 group-hover:opacity-100 transition min-h-[38px] min-w-[38px] flex items-center justify-center"
                                 title="Delete task"
+                                aria-label="Delete task"
                               >
-                                <Trash2 className="w-3.5 h-3.5" />
+                                <Trash2 className="w-4 h-4" />
                               </button>
                             </div>
                           </div>
@@ -1655,29 +1721,29 @@ export default function PlanApp({
                           {/* Expanded Detail View */}
                           {isExpanded && (
                             <div
-                              className="mt-3 pt-3 border-t border-white/10 text-xs space-y-2 animate-window-open"
+                              className="mt-3.5 pt-3.5 border-t border-white/10 text-[14px] space-y-3 animate-window-open"
                               onClick={e => e.stopPropagation()}
                             >
-                              <div className="flex items-center gap-2">
+                              <div className="flex items-center gap-2 flex-wrap">
                                 <button
                                   type="button"
                                   onClick={e => toggleTaskMyDay(task.id, e)}
-                                  className={`px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition ${
+                                  className={`px-3 py-1.5 rounded-xl text-[13px] font-medium flex items-center gap-1.5 transition ${
                                     task.myDay
                                       ? 'bg-amber-500/25 text-amber-300 border border-amber-500/40'
                                       : 'bg-white/5 text-slate-300 hover:bg-white/10'
                                   }`}
                                 >
-                                  <Sun className="w-3.5 h-3.5 text-amber-400" />
+                                  <Sun className="w-4 h-4 text-amber-400" />
                                   <span>{task.myDay ? 'In My Day' : 'Add to My Day'}</span>
                                 </button>
 
                                 <button
                                   type="button"
                                   onClick={() => handleCreateNoteFromTask(task)}
-                                  className="px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 bg-amber-500/10 text-amber-300 hover:bg-amber-500/20 border border-amber-500/20 transition"
+                                  className="px-3 py-1.5 rounded-xl text-[13px] font-medium flex items-center gap-1.5 bg-amber-500/10 text-amber-300 hover:bg-amber-500/20 border border-amber-500/20 transition"
                                 >
-                                  <FileText className="w-3.5 h-3.5 text-amber-400" />
+                                  <FileText className="w-4 h-4 text-amber-400" />
                                   <span>Open in Notes</span>
                                 </button>
                               </div>
@@ -1693,7 +1759,7 @@ export default function PlanApp({
                                     )
                                     saveTasks(updated)
                                   }}
-                                  className="w-full h-16 bg-white/5 border border-white/10 rounded-xl p-2.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-teal-400"
+                                  className="w-full h-20 bg-white/5 border border-white/10 rounded-xl p-3 text-[14px] text-slate-200 placeholder-slate-500 focus:outline-none focus:border-teal-400 font-sans"
                                 />
                               </div>
                             </div>
@@ -1708,32 +1774,33 @@ export default function PlanApp({
                         <button
                           type="button"
                           onClick={() => setShowCompletedTasks(!showCompletedTasks)}
-                          className="flex items-center gap-2 text-xs font-semibold text-slate-400 hover:text-white mb-2"
+                          className="flex items-center gap-2 text-[14px] font-medium text-slate-400 hover:text-white mb-2.5 py-1 px-1"
                         >
                           {showCompletedTasks ? (
-                            <ChevronDown className="w-3.5 h-3.5" />
+                            <ChevronDown className="w-4 h-4" />
                           ) : (
-                            <ChevronRight className="w-3.5 h-3.5" />
+                            <ChevronRight className="w-4 h-4" />
                           )}
                           <span>Completed ({completedTasksList.length})</span>
                         </button>
 
                         {showCompletedTasks && (
-                          <div className="space-y-1.5">
+                          <div className="space-y-2">
                             {completedTasksList.map(task => (
                               <div
                                 key={task.id}
-                                className="p-3 rounded-2xl bg-white/[0.02] border border-white/5 flex items-center justify-between gap-3 text-slate-500 group"
+                                className="p-3.5 sm:p-4 rounded-2xl bg-white/[0.02] border border-white/5 flex items-center justify-between gap-3 text-slate-500 group min-h-[50px]"
                               >
-                                <div className="flex items-center gap-3 min-w-0">
+                                <div className="flex items-center gap-3.5 min-w-0">
                                   <button
                                     type="button"
                                     onClick={e => toggleTaskComplete(task.id, e)}
-                                    className="text-emerald-400 shrink-0"
+                                    className="p-1 -m-1 text-emerald-400 shrink-0"
+                                    aria-label="Mark task incomplete"
                                   >
                                     <CheckCircle2 className="w-5 h-5 fill-emerald-500/20" />
                                   </button>
-                                  <span className="text-xs line-through truncate text-slate-400">
+                                  <span className="text-[15px] sm:text-[16px] line-through truncate text-slate-400">
                                     {task.title}
                                   </span>
                                 </div>
@@ -1741,9 +1808,11 @@ export default function PlanApp({
                                 <button
                                   type="button"
                                   onClick={e => deleteTask(task.id, e)}
-                                  className="p-1 rounded-lg text-slate-500 hover:text-rose-400 opacity-60 group-hover:opacity-100 transition shrink-0"
+                                  className="p-2 rounded-lg text-slate-500 hover:text-rose-400 opacity-60 group-hover:opacity-100 transition shrink-0 min-h-[36px] min-w-[36px] flex items-center justify-center"
+                                  title="Delete task"
+                                  aria-label="Delete task"
                                 >
-                                  <Trash2 className="w-3.5 h-3.5" />
+                                  <Trash2 className="w-4 h-4" />
                                 </button>
                               </div>
                             ))}
