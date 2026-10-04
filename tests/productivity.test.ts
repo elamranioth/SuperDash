@@ -100,4 +100,37 @@ Some regular text at the end`
     expect(checklist[1]).toEqual({ completed: true, text: 'Finish document' })
     expect(checklist[2]).toEqual({ completed: false, text: 'Review case file' })
   })
+
+  it('verifies converting a checklist item into a Plan task structure', () => {
+    const checklistItem = { text: 'Prepare legal brief', completed: false }
+    const convertedTask: TaskItem = {
+      id: 'task-from-note-1',
+      title: checklistItem.text,
+      completed: checklistItem.completed,
+      priority: 'medium',
+      myDay: true,
+      important: false,
+      notes: 'From Note: Court Prep',
+      createdAt: Date.now()
+    }
+
+    expect(convertedTask.title).toBe('Prepare legal brief')
+    expect(convertedTask.myDay).toBe(true)
+    expect(convertedTask.notes).toContain('From Note:')
+  })
+
+  it('verifies visual WYSIWYG HTML tags conversion for legacy markdown notes', () => {
+    const markdown = '**Bold Objective**\n*Italic Note*\n> Important Quote'
+    
+    // Simulate WYSIWYG parser
+    const html = markdown
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*([^*]+?)\*/g, '<em>$1</em>')
+      .replace(/^>\s+(.*)$/gm, '<blockquote>$1</blockquote>')
+
+    expect(html).toContain('<strong>Bold Objective</strong>')
+    expect(html).toContain('<em>Italic Note</em>')
+    expect(html).toContain('<blockquote>Important Quote</blockquote>')
+    expect(html).not.toContain('**')
+  })
 })

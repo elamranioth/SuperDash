@@ -406,28 +406,38 @@ export function setupDefaultCommands(actions: {
       }
     },
     {
+      id: 'cmd-open-plan',
+      title: 'Open Plan',
+      description: 'Open Plan productivity hub with notes, tasks, and checklists',
+      category: 'apps',
+      keywords: ['plan', 'planner', 'productivity', 'organize', 'agenda'],
+      icon: CheckSquare,
+      shortcut: 'P',
+      execute: () => actions.openApp('plan')
+    },
+    {
       id: 'cmd-create-note',
       title: 'Create Note',
-      description: 'Open Notes app and start drafting a new note',
+      description: 'Open Plan and start drafting a new note',
       category: 'productivity',
-      keywords: ['note', 'notes', 'create', 'write', 'memo'],
+      keywords: ['note', 'notes', 'create', 'write', 'memo', 'plan'],
       icon: FileText,
       shortcut: 'N',
       execute: () => {
-        actions.openApp('notes')
+        actions.openApp('plan', { initialTab: 'notes', createNewNote: true })
         actions.createQuickNote()
       }
     },
     {
       id: 'cmd-add-task',
       title: 'Add Task',
-      description: 'Quickly record a new task to complete',
+      description: 'Quickly record a new task in Plan',
       category: 'productivity',
-      keywords: ['task', 'todo', 'add', 'goal', 'new'],
+      keywords: ['task', 'todo', 'add', 'goal', 'new', 'plan'],
       icon: CheckSquare,
       shortcut: 'T',
       execute: () => {
-        actions.openApp('tasks')
+        actions.openApp('plan', { initialTab: 'tasks' })
         actions.createQuickTask()
       }
     },

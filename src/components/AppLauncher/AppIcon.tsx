@@ -21,6 +21,35 @@ export default function AppIcon({ appId, className = '', size = 'md' }: AppIconP
 
   const renderIconContent = () => {
     switch (appId) {
+      // 0. PLAN — Unified Productivity (Amber to Teal/Emerald Planner)
+      case 'plan':
+        return (
+          <div className="relative w-full h-full bg-gradient-to-br from-amber-400 via-teal-500 to-emerald-700 flex items-center justify-center overflow-hidden">
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,_rgba(255,255,255,0.4)_0%,_transparent_60%)]" />
+            {/* Planner Card */}
+            <div className="relative w-[56%] h-[64%] bg-slate-950/70 rounded-lg border border-white/25 shadow-lg flex flex-col justify-between p-1.5 overflow-hidden">
+              {/* Top Accent Bar */}
+              <div className="h-1 bg-gradient-to-r from-amber-400 to-emerald-400 rounded-t w-full" />
+              {/* Checklist & Note lines */}
+              <div className="space-y-1.5 my-auto">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2.5 h-2.5 rounded bg-emerald-400 flex items-center justify-center shadow-xs">
+                    <svg className="w-2 h-2 text-slate-950" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  </div>
+                  <div className="h-1 bg-white/90 rounded flex-1" />
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2.5 h-2.5 rounded bg-white/20 flex items-center justify-center" />
+                  <div className="h-1 bg-white/60 rounded flex-1" />
+                </div>
+                <div className="h-1 bg-amber-400/80 rounded w-3/4 ml-4" />
+              </div>
+            </div>
+          </div>
+        )
+
       // 1. NOTES — Warm Amber / Golden Stationery
       case 'notes':
         return (

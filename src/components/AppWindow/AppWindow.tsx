@@ -46,26 +46,18 @@ export default function AppWindow({
   }
 
   return (
-    <div className="fixed inset-0 z-40 bg-slate-950 sm:bg-black/60 sm:backdrop-blur-md flex items-center justify-center p-0 sm:p-4 md:p-6 transition-all duration-200">
+    <div className="fixed inset-0 z-40 bg-slate-950 sm:bg-black/60 sm:backdrop-blur-md flex items-center justify-center p-0 sm:p-2 md:p-3 overflow-hidden transition-all duration-200">
       <div
-        className={`liquid-glass-heavy border-0 sm:border sm:border-white/20 rounded-none sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-window-open transition-all duration-300 w-full h-[100dvh] sm:h-auto max-w-full relative ${
+        className={`liquid-glass-heavy border-0 sm:border sm:border-white/20 rounded-none sm:rounded-2xl md:rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-window-open transition-all duration-300 w-full max-w-full relative h-[100dvh] max-h-[100dvh] ${
           isMaximized
-            ? 'sm:h-full sm:max-h-none sm:rounded-none'
-            : 'max-w-5xl sm:h-[88vh] sm:max-h-[780px]'
+            ? 'sm:h-[100dvh] sm:max-h-[100dvh] sm:rounded-none'
+            : 'sm:max-w-5xl sm:h-[min(90dvh,820px)] sm:max-h-[calc(100dvh-1rem)] md:sm:max-h-[calc(100dvh-1.5rem)]'
         }`}
-        style={
-          !isMaximized && app.defaultWindowSize
-            ? {
-                maxWidth: undefined, // Handled responsive via media queries
-                height: undefined
-              }
-            : undefined
-        }
       >
         <div className="glass-specular hidden sm:block" />
 
-        {/* Window Title Bar - Mobile Native Top App Bar vs Desktop Traffic Lights Bar */}
-        <div className="h-14 sm:h-12 bg-slate-900/95 sm:bg-black/40 border-b border-white/10 px-2 sm:px-4 flex items-center justify-between select-none shrink-0 relative z-20 pt-[env(safe-area-inset-top,0px)]">
+        {/* Window Title Bar - Always Visible, Sticky, Never Pushed Off-Screen */}
+        <div className="h-12 bg-slate-900/95 sm:bg-black/50 border-b border-white/10 px-2 sm:px-4 flex items-center justify-between select-none shrink-0 relative z-30 pt-[env(safe-area-inset-top,0px)]">
           {/* Mobile Back Button (left side) */}
           <div className="flex sm:hidden items-center">
             <button
@@ -73,10 +65,10 @@ export default function AppWindow({
                 sounds.playClick()
                 onClose(appId)
               }}
-              className="min-w-[44px] min-h-[44px] p-2 -ml-1 text-slate-300 hover:text-white active:scale-90 flex items-center justify-center transition"
+              className="min-w-[40px] min-h-[40px] p-1.5 -ml-1 text-slate-300 hover:text-white active:scale-90 flex items-center justify-center transition"
               title="Back to Dashboard"
             >
-              <ChevronLeft className="w-6 h-6" />
+              <ChevronLeft className="w-5 h-5" />
             </button>
           </div>
 
@@ -128,24 +120,24 @@ export default function AppWindow({
             <span className="text-sm sm:text-xs font-semibold tracking-wide truncate">{app.name}</span>
           </div>
 
-          {/* Right Action: Mobile Close X button or Desktop spacer */}
+          {/* Right Action: Permanent Close X button visible on ALL screen sizes */}
           <div className="flex items-center justify-end">
             <button
               onClick={() => {
                 sounds.playClick()
                 onClose(appId)
               }}
-              className="min-w-[44px] min-h-[44px] p-2 -mr-1 text-slate-400 hover:text-white active:bg-white/10 rounded-full flex items-center justify-center transition sm:hidden"
-              title="Close window"
+              className="min-w-[40px] min-h-[40px] sm:min-w-0 sm:min-h-0 p-2 sm:p-1.5 -mr-1 text-slate-400 hover:text-white hover:bg-white/10 active:scale-95 rounded-xl flex items-center justify-center transition"
+              title="Close window (Esc)"
+              aria-label="Close window"
             >
-              <X className="w-5 h-5" />
+              <X className="w-5 h-5 sm:w-4 sm:h-4" />
             </button>
-            <div className="w-10 hidden sm:block" />
           </div>
         </div>
 
-        {/* Window Content Canvas */}
-        <div className="flex-1 overflow-auto relative bg-slate-950/90 z-10 w-full max-w-full pb-[env(safe-area-inset-bottom,0px)]">
+        {/* Window Content Canvas - Strict Min-H-0 and Flex Layout for Internal Scrolling */}
+        <div className="flex-1 min-h-0 overflow-hidden relative bg-slate-950/90 z-10 w-full max-w-full flex flex-col pb-[env(safe-area-inset-bottom,0px)]">
           <Suspense
             fallback={
               <div className="flex h-full w-full items-center justify-center text-slate-500 gap-2">

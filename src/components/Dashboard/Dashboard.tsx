@@ -130,12 +130,15 @@ export default function Dashboard() {
   const handleOpenApp = useCallback((appId: string, customProps?: Record<string, unknown>) => {
     sounds.playClick()
     // Backward-compatibility and consolidated redirection
-    if (appId === 'converter') {
+    if (appId === 'notes') {
+      appId = 'plan'
+      customProps = { initialTab: 'notes', ...(customProps || {}) }
+    } else if (appId === 'tasks' || appId === 'reminders') {
+      appId = 'plan'
+      customProps = { initialTab: 'tasks', ...(customProps || {}) }
+    } else if (appId === 'converter') {
       appId = 'calculator'
       customProps = { ...(customProps || {}), initialMode: 'convert' }
-    } else if (appId === 'reminders') {
-      appId = 'tasks'
-      customProps = { ...(customProps || {}), initialFilter: 'reminders' }
     } else if (appId === 'timer') {
       appId = 'time'
       customProps = { ...(customProps || {}), initialMode: 'timer' }

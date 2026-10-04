@@ -15,6 +15,7 @@ import CollectionIcon from '@/apps/collections/CollectionIcon'
 import GrowthIcon from '@/apps/growth/GrowthIcon'
 
 // Lazy-loaded application components for optimal code splitting & performance
+const PlanApp = lazy(() => import('@/apps/plan/PlanApp'))
 const NotesApp = lazy(() => import('@/apps/notes/NotesApp'))
 const TasksApp = lazy(() => import('@/apps/tasks/TasksApp'))
 const TimeApp = lazy(() => import('@/apps/time/TimeApp'))
@@ -32,30 +33,19 @@ export interface RegisteredApp extends AppDefinition {
   component: ComponentType<any>
 }
 
-// Master Minimalist 11-App Registry (Notes + Tasks as Primary Productivity)
+// Master Minimalist 10-App Registry (Plan as Primary Productivity Hub)
 const APP_REGISTRY: RegisteredApp[] = [
   // --- PRODUCTIVITY ---
   {
-    id: 'notes',
-    name: 'Notes',
-    description: 'Fast auto-saving notes with tags, color coding, and search',
-    icon: FileText,
-    category: 'productivity',
-    keywords: ['notes', 'memo', 'writing', 'text', 'markdown', 'ideas'],
-    gradient: 'from-amber-400 to-yellow-600',
-    component: NotesApp,
-    defaultWindowSize: { width: 920, height: 640 }
-  },
-  {
-    id: 'tasks',
-    name: 'Tasks',
-    description: 'Actionable goal tracker, daily checklists, scheduled reminders, and priorities',
+    id: 'plan',
+    name: 'Plan',
+    description: 'Unified productivity workspace: rich-text notes, actionable tasks, and daily planning',
     icon: CheckSquare,
     category: 'productivity',
-    keywords: ['tasks', 'todo', 'goals', 'checklist', 'productivity', 'habits', 'reminders', 'alerts'],
-    gradient: 'from-emerald-400 to-teal-600',
-    component: TasksApp,
-    defaultWindowSize: { width: 840, height: 620 }
+    keywords: ['plan', 'notes', 'tasks', 'todo', 'checklist', 'goals', 'writing', 'planner'],
+    gradient: 'from-amber-400 via-teal-500 to-emerald-600',
+    component: PlanApp,
+    defaultWindowSize: { width: 980, height: 680 }
   },
   {
     id: 'ideas',
@@ -168,6 +158,16 @@ export function getRegisteredApps(): RegisteredApp[] {
 }
 
 export function getAppById(appId: string): RegisteredApp | undefined {
+  if (appId === 'notes' || appId === 'tasks') {
+    const plan = APP_REGISTRY.find(app => app.id === 'plan')
+    if (plan) {
+      return {
+        ...plan,
+        id: appId,
+        name: appId === 'notes' ? 'Plan — Notes' : 'Plan — Tasks'
+      }
+    }
+  }
   return APP_REGISTRY.find(app => app.id === appId)
 }
 

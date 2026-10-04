@@ -11,7 +11,8 @@ import {
   Bell,
   Check,
   ChevronDown,
-  Plus
+  Plus,
+  FileText
 } from 'lucide-react'
 import { ThemeMode, DashboardDefinition } from '@/types'
 import { notificationService } from '@/services/notifications'
@@ -22,7 +23,7 @@ interface TopMenuBarProps {
   theme: ThemeMode
   onToggleTheme: () => void
   onOpenSearch: () => void
-  onOpenApp: (appId: string) => void
+  onOpenApp: (appId: string, customProps?: Record<string, unknown>) => void
   clockFormat: '12h' | '24h'
   isEditMode: boolean
   onToggleEditMode: () => void
@@ -181,17 +182,30 @@ export default function TopMenuBar({
         </div>
 
         <nav className="hidden lg:flex items-center gap-3 text-slate-400 text-[11px]">
-          <button onClick={() => onOpenApp('notes')} className="hover:text-white transition">
-            Notes
-          </button>
-          <button onClick={() => onOpenApp('tasks')} className="hover:text-white transition">
-            Tasks
+          <button onClick={() => onOpenApp('plan')} className="hover:text-white transition font-medium">
+            Plan
           </button>
         </nav>
       </div>
 
       {/* Mobile Top Bar Controls (< md) */}
       <div className="flex md:hidden items-center gap-1">
+        {/* Compact Notes Shortcut: document icon with '+' */}
+        <button
+          onClick={() => {
+            sounds.playClick()
+            onOpenApp('plan', { initialTab: 'notes', createNewNote: true })
+          }}
+          className="p-2 rounded-xl text-slate-300 hover:text-white active:bg-white/10 transition touch-manipulation relative"
+          title="New Note (Plan)"
+          aria-label="New Note"
+        >
+          <div className="relative flex items-center justify-center">
+            <FileText className="w-4 h-4 text-amber-400" />
+            <Plus className="w-2.5 h-2.5 text-white absolute -bottom-0.5 -right-1 stroke-[3]" />
+          </div>
+        </button>
+
         <button
           onClick={() => {
             sounds.playClick()
@@ -268,6 +282,22 @@ export default function TopMenuBar({
               <span>Edit Dashboard</span>
             </>
           )}
+        </button>
+
+        {/* Compact Notes Shortcut: document icon with '+' */}
+        <button
+          onClick={() => {
+            sounds.playClick()
+            onOpenApp('plan', { initialTab: 'notes', createNewNote: true })
+          }}
+          className="p-1 rounded-md hover:bg-white/10 text-slate-400 hover:text-white transition relative"
+          title="New Note (Plan)"
+          aria-label="New Note"
+        >
+          <div className="relative flex items-center justify-center">
+            <FileText className="w-3.5 h-3.5 text-amber-400" />
+            <Plus className="w-2 h-2 text-white absolute -bottom-0.5 -right-1 stroke-[3]" />
+          </div>
         </button>
 
         {/* Spotlight Trigger */}

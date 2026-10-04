@@ -2,13 +2,12 @@ import { describe, it, expect } from 'vitest'
 import { getRegisteredApps, getAppById } from '@/registry/appRegistry'
 
 describe('Universal Search & App Registry - Integrity & Deep Linking', () => {
-  it('contains exactly the authorized 11 registered apps in AppRegistry', () => {
+  it('contains exactly the authorized 10 registered apps in AppRegistry', () => {
     const apps = getRegisteredApps()
-    expect(apps.length).toBe(11)
+    expect(apps.length).toBe(10)
 
     const expectedAppIds = [
-      'notes',
-      'tasks',
+      'plan',
       'ideas',
       'decisionbook',
       'live',
@@ -37,11 +36,15 @@ describe('Universal Search & App Registry - Integrity & Deep Linking', () => {
   })
 
   it('verifies deep link parameters for primary modules', () => {
-    // Notes deep link
+    // Plan deep link
+    const planApp = getAppById('plan')
+    expect(planApp).toBeDefined()
+
+    // Notes deep link (resolves to plan)
     const notesApp = getAppById('notes')
     expect(notesApp).toBeDefined()
 
-    // Tasks deep link
+    // Tasks deep link (resolves to plan)
     const tasksApp = getAppById('tasks')
     expect(tasksApp).toBeDefined()
 

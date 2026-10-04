@@ -1,7 +1,7 @@
 import { storageService, DEFAULT_SETTINGS } from '@/services/storage'
 import { TaskItem, ReminderItem, DashboardSettings } from '@/types'
 
-const MIGRATION_KEY = 'migration_minimalism_v2'
+const MIGRATION_KEY = 'migration_minimalism_v3'
 
 export async function runMinimalismMigration(): Promise<{ migrated: boolean; remindersImported: number }> {
   try {
@@ -53,6 +53,8 @@ export async function runMinimalismMigration(): Promise<{ migrated: boolean; rem
     // 2. Normalize Dashboard Settings (App IDs & Order)
     const settings = await storageService.get<DashboardSettings>('settings', DEFAULT_SETTINGS)
     const appMap: Record<string, string> = {
+      notes: 'plan',
+      tasks: 'plan',
       converter: 'tasks',
       reminders: 'tasks',
       timer: 'time',

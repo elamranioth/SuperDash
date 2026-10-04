@@ -41,8 +41,9 @@ import AboutDiagnosticsSettings from '@/apps/settings/AboutDiagnosticsSettings'
 import { updateService } from '@/services/updateService'
 
 const APP_META: Record<string, string> = {
-  notes: 'Notes',
-  tasks: 'Tasks',
+  plan: 'Plan',
+  notes: 'Plan (Notes)',
+  tasks: 'Plan (Tasks)',
   ideas: 'Ideas',
   decisionbook: 'Decision Book',
   live: 'Live',

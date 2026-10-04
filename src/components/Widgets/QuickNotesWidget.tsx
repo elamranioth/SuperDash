@@ -84,7 +84,7 @@ export default function QuickNotesWidget({ onOpenNotes }: QuickNotesWidgetProps)
                 onOpenNotes()
               }}
               className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition"
-              title="Open full Notes app"
+              title="Open Plan (Notes)"
             >
               <ExternalLink className="w-3.5 h-3.5" />
             </button>

@@ -49,7 +49,7 @@ export default function TasksWidget({ onOpenTasks }: TasksWidgetProps) {
               onOpenTasks()
             }}
             className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition"
-            title="Open full Tasks app"
+            title="Open Plan (Tasks)"
           >
             <ExternalLink className="w-3.5 h-3.5" />
           </button>

@@ -264,7 +264,7 @@ export default function GlobalSearchModal({
             badge: note.tags[0] || 'Note',
             action: () => {
               sounds.playClick()
-              onOpenApp('notes', { initialNoteId: note.id })
+              onOpenApp('plan', { initialTab: 'notes', initialNoteId: note.id })
               onClose()
             }
           })
@@ -288,7 +288,7 @@ export default function GlobalSearchModal({
             badge: task.completed ? 'Done' : 'Pending',
             action: () => {
               sounds.playClick()
-              onOpenApp('tasks')
+              onOpenApp('plan', { initialTab: 'tasks' })
               onClose()
             }
           })
@@ -738,7 +738,7 @@ export default function GlobalSearchModal({
               <Sparkles className="w-6 h-6 mx-auto text-slate-600 mb-2" />
               <p className="text-sm font-medium text-slate-400">No matching results</p>
               <p className="text-xs">
-                Try typing a command like "Open Notes", "Timer 10 minutes", or math like "15 * 8"
+                Try typing a command like "Open Plan", "Timer 10 minutes", or math like "15 * 8"
               </p>
             </div>
           ) : (

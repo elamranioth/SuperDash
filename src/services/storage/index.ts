@@ -226,8 +226,7 @@ export const DEFAULT_SETTINGS: DashboardSettings = {
   dockPosition: 'bottom',
   hiddenAppIds: [],
   appOrder: [
-    'notes',
-    'tasks',
+    'plan',
     'ideas',
     'decisionbook',
     'live',
@@ -255,8 +254,8 @@ export const DEFAULT_SETTINGS: DashboardSettings = {
   marketPairs: ['BTC-USD', 'AED-MAD', 'USD-AED'],
   selectedCurrencies: ['AED', 'EUR', 'GBP', 'MAD', 'PHP', 'SAR', 'JPY', 'CAD'],
   worldClockCities: ['Dubai', 'Manila', 'London', 'New York', 'Tokyo'],
-  favoriteAppIds: ['notes', 'tasks', 'time', 'finance'],
-  recentAppIds: ['notes', 'tasks'],
+  favoriteAppIds: ['plan', 'time', 'finance'],
+  recentAppIds: ['plan'],
   showRecentApps: true
 }
 
