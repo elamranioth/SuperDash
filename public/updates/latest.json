@@ -1,17 +1,17 @@
 {
-  "version": "1.7.0",
-  "releaseDate": "2026-10-01",
-  "title": "SuperDash 1.7 — Growth Application & Android Update Engine",
-  "summary": "Introduced the brand-new Growth application (leads pipeline, relationship care, playbook & referrals), refined native Android APK update engine with live background downloads, and performance optimizations.",
+  "version": "1.7.1",
+  "releaseDate": "2026-10-04",
+  "title": "SuperDash 1.7.1 — Plan Mobile UI Redesign & Cloudflare Edge",
+  "summary": "Major mobile UI redesign for the Plan app featuring Microsoft To-Do scale, Claude/Anthropic typography, compact side navigation, and integrated vector glyphs.",
   "minAppVersion": "1.0.0",
-  "downloadUrl": "https://elamranioth.github.io/SuperDash/SuperDash.apk",
-  "apkDownloadUrl": "https://elamranioth.github.io/SuperDash/SuperDash.apk",
+  "downloadUrl": "https://superdash-ero.pages.dev/SuperDash.apk",
+  "apkDownloadUrl": "https://superdash-ero.pages.dev/SuperDash.apk",
   "highlights": [
-    "Brand new 'Growth' app: Leads pipeline, client relationship tracking, actionable playbooks & referral loop",
-    "Completely fixed Android update engine: Direct system download & automatic package installation",
-    "Live remote update checking across all Android versions",
-    "Liquid Glass Quick Controls Bottom Sheet from mobile header",
-    "Original SuperDash OS-grade squircle icons across all applications"
+    "Plan App mobile redesign: Microsoft To-Do scale, comfortable 48-56px touch targets",
+    "Claude / Anthropic style calm, legible sans-serif typography across Plan & Tasks",
+    "Compact side navigation drawer with dark blurred backdrop overlay",
+    "Integrated single-glyph Add Task / Add Note vector action icons",
+    "Deployed to Cloudflare Pages high-speed edge CDN"
   ],
   "changes": [
     {
