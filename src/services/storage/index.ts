@@ -2,6 +2,7 @@ import {
   DashboardSettings,
   NoteItem,
   TaskItem,
+  TaskList,
   CalendarEvent,
   ReminderItem,
   DocumentItem,
@@ -226,20 +227,15 @@ export const DEFAULT_SETTINGS: DashboardSettings = {
   hiddenAppIds: [],
   appOrder: [
     'notes',
-    'calendar',
     'tasks',
-    'calculator',
-    'time',
-    'weather',
-    'files',
-    'reader',
     'ideas',
-    'collections',
     'decisionbook',
     'live',
+    'collections',
     'hearings',
     'finance',
     'growth',
+    'time',
     'settings'
   ],
   glassOpacity: 75,
@@ -259,8 +255,8 @@ export const DEFAULT_SETTINGS: DashboardSettings = {
   marketPairs: ['BTC-USD', 'AED-MAD', 'USD-AED'],
   selectedCurrencies: ['AED', 'EUR', 'GBP', 'MAD', 'PHP', 'SAR', 'JPY', 'CAD'],
   worldClockCities: ['Dubai', 'Manila', 'London', 'New York', 'Tokyo'],
-  favoriteAppIds: ['calculator', 'notes', 'time', 'tasks'],
-  recentAppIds: ['notes', 'tasks', 'calculator'],
+  favoriteAppIds: ['notes', 'tasks', 'time', 'finance'],
+  recentAppIds: ['notes', 'tasks'],
   showRecentApps: true
 }
 
@@ -367,6 +363,12 @@ export const INITIAL_NOTES: NoteItem[] = [
   }
 ]
 
+export const INITIAL_TASK_LISTS: TaskList[] = [
+  { id: 'list-work', name: 'Work', color: '#6366f1', createdAt: Date.now() - 3600000 * 24 },
+  { id: 'list-personal', name: 'Personal', color: '#10b981', createdAt: Date.now() - 3600000 * 20 },
+  { id: 'list-clients', name: 'Clients', color: '#f59e0b', createdAt: Date.now() - 3600000 * 16 }
+]
+
 export const INITIAL_TASKS: TaskItem[] = [
   {
     id: 'task-1',
@@ -374,7 +376,10 @@ export const INITIAL_TASKS: TaskItem[] = [
     completed: true,
     priority: 'high',
     dueDate: toLocalYYYYMMDD(),
-    tag: 'Development',
+    tag: 'Work',
+    myDay: true,
+    important: true,
+    listId: 'list-work',
     createdAt: Date.now() - 3600000 * 5
   },
   {
@@ -383,7 +388,10 @@ export const INITIAL_TASKS: TaskItem[] = [
     completed: false,
     priority: 'high',
     dueDate: toLocalYYYYMMDD(),
-    tag: 'Testing',
+    tag: 'Work',
+    myDay: true,
+    important: true,
+    listId: 'list-work',
     createdAt: Date.now() - 3600000 * 3
   },
   {
@@ -392,7 +400,10 @@ export const INITIAL_TASKS: TaskItem[] = [
     completed: false,
     priority: 'medium',
     dueDate: toLocalYYYYMMDD(new Date(Date.now() + 86400000)),
-    tag: 'Design',
+    tag: 'Personal',
+    myDay: false,
+    important: false,
+    listId: 'list-personal',
     createdAt: Date.now() - 3600000
   },
   {
@@ -401,7 +412,10 @@ export const INITIAL_TASKS: TaskItem[] = [
     completed: false,
     priority: 'low',
     dueDate: toLocalYYYYMMDD(new Date(Date.now() + 86400000 * 2)),
-    tag: 'Productivity',
+    tag: 'Personal',
+    myDay: false,
+    important: false,
+    listId: 'list-personal',
     createdAt: Date.now()
   }
 ]

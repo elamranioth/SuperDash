@@ -187,12 +187,6 @@ export default function TopMenuBar({
           <button onClick={() => onOpenApp('tasks')} className="hover:text-white transition">
             Tasks
           </button>
-          <button onClick={() => onOpenApp('calendar')} className="hover:text-white transition">
-            Calendar
-          </button>
-          <button onClick={() => onOpenApp('files')} className="hover:text-white transition">
-            Files
-          </button>
         </nav>
       </div>
 
@@ -341,14 +335,14 @@ export default function TopMenuBar({
           {isFullscreen ? <Minimize className="w-3.5 h-3.5" /> : <Maximize className="w-3.5 h-3.5" />}
         </button>
 
-        {/* Live Clock / Calendar jump */}
+        {/* Live Clock / Time jump */}
         <div
           onClick={() => {
             sounds.playClick()
-            onOpenApp('calendar')
+            onOpenApp('time')
           }}
           className="flex items-center gap-1.5 font-mono text-[11px] text-slate-200 cursor-pointer hover:text-indigo-300 transition ml-1"
-          title="Click to open calendar"
+          title="Click to open time"
         >
           <span className="hidden lg:inline text-slate-400">{dateShort}</span>
           <span>{timeStr}</span>

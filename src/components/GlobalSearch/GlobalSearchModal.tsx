@@ -166,7 +166,6 @@ export default function GlobalSearchModal({
         action: () => {
           sounds.playSuccess()
           navigator.clipboard?.writeText(mathResult.value)?.catch(() => {})
-          onOpenApp('calculator')
           onClose()
         }
       })
@@ -313,7 +312,7 @@ export default function GlobalSearchModal({
             badge: 'Event',
             action: () => {
               sounds.playClick()
-              onOpenApp('calendar', { initialEventId: evt.id })
+              onOpenApp('tasks')
               onClose()
             }
           })
@@ -333,7 +332,7 @@ export default function GlobalSearchModal({
             badge: rem.completed ? 'Done' : 'Alert',
             action: () => {
               sounds.playClick()
-              onOpenApp('tasks', { initialFilter: 'reminders' })
+              onOpenApp('tasks')
               onClose()
             }
           })
@@ -349,11 +348,11 @@ export default function GlobalSearchModal({
             title: doc.name,
             subtitle: `${doc.category} • ${(doc.sizeBytes / 1024).toFixed(1)} KB`,
             icon: Folder,
-            categoryLabel: 'Files',
+            categoryLabel: 'Documents',
             badge: doc.type,
             action: () => {
               sounds.playClick()
-              onOpenApp('files', { initialFileId: doc.id })
+              onOpenApp('collections')
               onClose()
             }
           })
@@ -498,55 +497,7 @@ export default function GlobalSearchModal({
         }
       })
 
-      // Reader Articles
-      readerArticles.forEach(art => {
-        if (
-          art.title.toLowerCase().includes(q) ||
-          (art.author && art.author.toLowerCase().includes(q)) ||
-          (art.publication && art.publication.toLowerCase().includes(q)) ||
-          (art.excerpt && art.excerpt.toLowerCase().includes(q))
-        ) {
-          items.push({
-            id: `article-${art.id}`,
-            type: 'reader',
-            title: art.title,
-            subtitle: `${art.publication || 'Article'} • ${art.readingTimeMinutes} min read${art.author ? ` • by ${art.author}` : ''}`,
-            icon: BookOpen,
-            categoryLabel: 'Reader',
-            badge: art.status,
-            action: () => {
-              sounds.playClick()
-              onOpenApp('reader', { initialArticleId: art.id })
-              onClose()
-            }
-          })
-        }
-      })
 
-      // Saved Quotes
-      readerQuotes.forEach(qt => {
-        if (
-          qt.text.toLowerCase().includes(q) ||
-          qt.articleTitle.toLowerCase().includes(q) ||
-          (qt.articleAuthor && qt.articleAuthor.toLowerCase().includes(q)) ||
-          (qt.tags && qt.tags.some(t => t.toLowerCase().includes(q)))
-        ) {
-          items.push({
-            id: `quote-${qt.id}`,
-            type: 'reader',
-            title: `"${qt.text.slice(0, 65)}..."`,
-            subtitle: `${qt.articleAuthor ? `${qt.articleAuthor} • ` : ''}${qt.articleTitle}`,
-            icon: QuoteIcon,
-            categoryLabel: 'Quotes',
-            badge: 'Quote',
-            action: () => {
-              sounds.playClick()
-              onOpenApp('reader', { initialArticleId: qt.articleId, initialQuoteId: qt.id })
-              onClose()
-            }
-          })
-        }
-      })
 
       // Human Voices (Verified historical reflections)
       HUMAN_VOICES.forEach(voice => {
@@ -759,7 +710,7 @@ export default function GlobalSearchModal({
           <input
             ref={inputRef}
             type="text"
-            placeholder="Search apps, commands, notes, calendar, currencies, math..."
+            placeholder="Search apps, commands, notes, tasks, finances, currencies, math..."
             value={query}
             onChange={e => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
@@ -787,7 +738,7 @@ export default function GlobalSearchModal({
               <Sparkles className="w-6 h-6 mx-auto text-slate-600 mb-2" />
               <p className="text-sm font-medium text-slate-400">No matching results</p>
               <p className="text-xs">
-                Try typing a command like "Open Calculator", "Timer 10 minutes", or math like "15 * 8"
+                Try typing a command like "Open Notes", "Timer 10 minutes", or math like "15 * 8"
               </p>
             </div>
           ) : (

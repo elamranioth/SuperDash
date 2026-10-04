@@ -20,8 +20,7 @@ import GlobalSearchBar from '@/components/GlobalSearch/GlobalSearchBar'
 import GlobalSearchModal from '@/components/GlobalSearch/GlobalSearchModal'
 import MarketsWidget from '@/components/Widgets/MarketsWidget'
 import DateTimeWidget from '@/components/Widgets/DateTimeWidget'
-import WeatherWidget from '@/components/Widgets/WeatherWidget'
-import CalendarWidget from '@/components/Widgets/CalendarWidget'
+
 import TasksWidget from '@/components/Widgets/TasksWidget'
 import QuickNotesWidget from '@/components/Widgets/QuickNotesWidget'
 import TimerWidget from '@/components/Widgets/TimerWidget'
@@ -460,7 +459,7 @@ export default function Dashboard() {
                   variant="background"
                   format={activeDashboard?.layoutConfig.clockFormat || settings.clockFormat}
                   showSeconds={settings.showSeconds}
-                  onClick={() => handleOpenApp('calendar')}
+                  onClick={() => handleOpenApp('time')}
                 />
               </div>
             )}
@@ -557,42 +556,7 @@ export default function Dashboard() {
                   </GlassWidget>
                 )
               }
-              if (wConfig.widgetId === 'weather') {
-                return (
-                  <GlassWidget
-                    key={wConfig.instanceId}
-                    id={wConfig.instanceId}
-                    title="Atmospheric Weather"
-                    size={wConfig.size}
-                    noCard
-                    isEditMode={isEditMode}
-                    onRemove={() => handleRemoveWidget(wConfig.instanceId)}
-                    onToggleSize={() => handleToggleWidgetSize(wConfig.instanceId)}
-                  >
-                    <WeatherWidget
-                      location={settings.weatherLocation}
-                      unit={settings.weatherUnit}
-                      onClick={() => handleOpenApp('weather')}
-                    />
-                  </GlassWidget>
-                )
-              }
-              if (wConfig.widgetId === 'calendar') {
-                return (
-                  <GlassWidget
-                    key={wConfig.instanceId}
-                    id={wConfig.instanceId}
-                    title="Today Agenda"
-                    size={wConfig.size}
-                    noCard
-                    isEditMode={isEditMode}
-                    onRemove={() => handleRemoveWidget(wConfig.instanceId)}
-                    onToggleSize={() => handleToggleWidgetSize(wConfig.instanceId)}
-                  >
-                    <CalendarWidget onOpenCalendar={() => handleOpenApp('calendar')} />
-                  </GlassWidget>
-                )
-              }
+
               if (wConfig.widgetId === 'tasks') {
                 return (
                   <GlassWidget

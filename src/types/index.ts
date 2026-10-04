@@ -166,6 +166,16 @@ export interface TaskItem {
   notes?: string
   repeat?: 'none' | 'daily' | 'weekly' | 'monthly'
   hasReminder?: boolean
+  myDay?: boolean
+  important?: boolean
+  listId?: string
+}
+
+export interface TaskList {
+  id: string
+  name: string
+  color?: string
+  createdAt: number
 }
 
 export interface CalendarEvent {

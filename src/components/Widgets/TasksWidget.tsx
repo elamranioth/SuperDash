@@ -12,7 +12,12 @@ export default function TasksWidget({ onOpenTasks }: TasksWidgetProps) {
   const [tasks, setTasks] = useState<TaskItem[]>([])
 
   useEffect(() => {
-    storageService.get<TaskItem[]>('tasks', INITIAL_TASKS).then(setTasks)
+    const load = () => {
+      storageService.get<TaskItem[]>('tasks', INITIAL_TASKS).then(setTasks)
+    }
+    load()
+    window.addEventListener('superdash_task_updated', load)
+    return () => window.removeEventListener('superdash_task_updated', load)
   }, [])
 
   const handleToggle = (id: string, e: React.MouseEvent) => {

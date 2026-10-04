@@ -1,18 +1,13 @@
 import { lazy, ComponentType } from 'react'
 import {
-  Calculator as CalcIcon,
   FileText,
-  Calendar as CalIcon,
-  CloudSun,
   CheckSquare,
   Timer as TimerIcon,
   Settings as SettingsIcon,
-  Folder,
   Scale,
   Wallet,
   Lightbulb,
-  BookMarked,
-  BookOpen
+  BookMarked
 } from 'lucide-react'
 import { AppDefinition, AppCategory } from '@/types'
 import LiveIcon from '@/apps/live/LiveIcon'
@@ -20,19 +15,14 @@ import CollectionIcon from '@/apps/collections/CollectionIcon'
 import GrowthIcon from '@/apps/growth/GrowthIcon'
 
 // Lazy-loaded application components for optimal code splitting & performance
-const CalculatorApp = lazy(() => import('@/apps/calculator/CalculatorApp'))
 const NotesApp = lazy(() => import('@/apps/notes/NotesApp'))
-const CalendarApp = lazy(() => import('@/apps/calendar/CalendarApp'))
-const WeatherApp = lazy(() => import('@/apps/weather/WeatherApp'))
 const TasksApp = lazy(() => import('@/apps/tasks/TasksApp'))
 const TimeApp = lazy(() => import('@/apps/time/TimeApp'))
 const SettingsApp = lazy(() => import('@/apps/settings/SettingsApp'))
-const FilesApp = lazy(() => import('@/apps/files/FilesApp'))
 const HearingsApp = lazy(() => import('@/apps/hearings/HearingsApp'))
 const FinanceApp = lazy(() => import('@/apps/finance/FinanceApp'))
 const IdeasApp = lazy(() => import('@/apps/ideas/IdeasApp'))
 const DecisionBookApp = lazy(() => import('@/apps/decisionbook/DecisionBookApp'))
-const ReaderApp = lazy(() => import('@/apps/reader/ReaderApp'))
 const LiveApp = lazy(() => import('@/apps/live/LiveApp'))
 const CollectionsApp = lazy(() => import('@/apps/collections/CollectionsApp'))
 const GrowthApp = lazy(() => import('@/apps/growth/GrowthApp'))
@@ -42,7 +32,7 @@ export interface RegisteredApp extends AppDefinition {
   component: ComponentType<any>
 }
 
-// Master Minimalist 15-App Registry
+// Master Minimalist 11-App Registry (Notes + Tasks as Primary Productivity)
 const APP_REGISTRY: RegisteredApp[] = [
   // --- PRODUCTIVITY ---
   {
@@ -55,17 +45,6 @@ const APP_REGISTRY: RegisteredApp[] = [
     gradient: 'from-amber-400 to-yellow-600',
     component: NotesApp,
     defaultWindowSize: { width: 920, height: 640 }
-  },
-  {
-    id: 'calendar',
-    name: 'Calendar',
-    description: 'Monthly schedule, event manager, and today agenda glance',
-    icon: CalIcon,
-    category: 'productivity',
-    keywords: ['calendar', 'events', 'schedule', 'agenda', 'meetings', 'dates'],
-    gradient: 'from-rose-500 to-red-600',
-    component: CalendarApp,
-    defaultWindowSize: { width: 960, height: 680 }
   },
   {
     id: 'tasks',
@@ -99,17 +78,6 @@ const APP_REGISTRY: RegisteredApp[] = [
     gradient: 'from-blue-600 to-cyan-700',
     component: DecisionBookApp,
     defaultWindowSize: { width: 920, height: 660 }
-  },
-  {
-    id: 'reader',
-    name: 'Reader',
-    description: 'Distraction-free article reader with highlights, English-to-Arabic translation, and saved quotes library',
-    icon: BookOpen,
-    category: 'productivity',
-    keywords: ['reader', 'article', 'reading', 'read', 'highlight', 'quote', 'translation', 'translate', 'arabic', 'research', 'web', 'clean', 'distraction free', 'book'],
-    gradient: 'from-amber-500 via-orange-500 to-rose-600',
-    component: ReaderApp,
-    defaultWindowSize: { width: 1040, height: 740 }
   },
   {
     id: 'live',
@@ -171,17 +139,6 @@ const APP_REGISTRY: RegisteredApp[] = [
 
   // --- UTILITIES ---
   {
-    id: 'calculator',
-    name: 'Calculator',
-    description: 'Standard & scientific math calculator with history tape and precision currency/unit converter',
-    icon: CalcIcon,
-    category: 'utilities',
-    keywords: ['calculator', 'math', 'numbers', 'addition', 'scientific', 'calculate', 'converter', 'currency', 'exchange', 'units', 'aed', 'usd', 'eur'],
-    gradient: 'from-amber-500 to-orange-600',
-    component: CalculatorApp,
-    defaultWindowSize: { width: 560, height: 640 }
-  },
-  {
     id: 'time',
     name: 'Time',
     description: 'Focus timer with Liquid Glass hourglass, deep work concentration goals, and global world clocks',
@@ -191,28 +148,6 @@ const APP_REGISTRY: RegisteredApp[] = [
     gradient: 'from-violet-500 via-indigo-500 to-purple-600',
     component: TimeApp,
     defaultWindowSize: { width: 840, height: 640 }
-  },
-  {
-    id: 'weather',
-    name: 'Weather',
-    description: 'Live atmospheric conditions, hourly graph, and 7-day forecast',
-    icon: CloudSun,
-    category: 'utilities',
-    keywords: ['weather', 'forecast', 'temperature', 'rain', 'climate', 'sun'],
-    gradient: 'from-sky-400 to-blue-600',
-    component: WeatherApp,
-    defaultWindowSize: { width: 880, height: 620 }
-  },
-  {
-    id: 'files',
-    name: 'Files',
-    description: 'Organize documents, spreadsheets, presentations, and stored files',
-    icon: Folder,
-    category: 'utilities',
-    keywords: ['files', 'documents', 'docs', 'storage', 'pdf'],
-    gradient: 'from-blue-500 to-indigo-600',
-    component: FilesApp,
-    defaultWindowSize: { width: 840, height: 580 }
   },
   {
     id: 'settings',

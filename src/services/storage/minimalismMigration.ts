@@ -1,7 +1,7 @@
 import { storageService, DEFAULT_SETTINGS } from '@/services/storage'
 import { TaskItem, ReminderItem, DashboardSettings } from '@/types'
 
-const MIGRATION_KEY = 'migration_minimalism_v1'
+const MIGRATION_KEY = 'migration_minimalism_v2'
 
 export async function runMinimalismMigration(): Promise<{ migrated: boolean; remindersImported: number }> {
   try {
@@ -53,25 +53,30 @@ export async function runMinimalismMigration(): Promise<{ migrated: boolean; rem
     // 2. Normalize Dashboard Settings (App IDs & Order)
     const settings = await storageService.get<DashboardSettings>('settings', DEFAULT_SETTINGS)
     const appMap: Record<string, string> = {
-      converter: 'calculator',
+      converter: 'tasks',
       reminders: 'tasks',
       timer: 'time',
       focus: 'time',
       worldclock: 'time',
       dashboardbuilder: 'settings',
       updates: 'settings',
-      morning: 'calendar'
+      morning: 'tasks',
+      calendar: '',
+      reader: '',
+      calculator: '',
+      weather: '',
+      files: ''
     }
+
+    const removedApps = new Set(['calendar', 'reader', 'calculator', 'weather', 'files', 'morning', 'updates', 'dashboardbuilder', 'converter', 'reminders', 'timer', 'focus', 'worldclock'])
 
     const mapList = (list: string[] = []): string[] => {
       const seen = new Set<string>()
       const result: string[] = []
       for (const id of list) {
+        if (removedApps.has(id)) continue
         const mapped = appMap[id] || id
-        // Exclude system features that are now internal to settings/dashboard
-        if (mapped === 'morning' || mapped === 'updates' || mapped === 'dashboardbuilder') {
-          continue
-        }
+        if (!mapped || removedApps.has(mapped)) continue
         if (!seen.has(mapped)) {
           seen.add(mapped)
           result.push(mapped)
@@ -85,13 +90,17 @@ export async function runMinimalismMigration(): Promise<{ migrated: boolean; rem
       appOrder: mapList(settings.appOrder),
       favoriteAppIds: mapList(settings.favoriteAppIds),
       recentAppIds: mapList(settings.recentAppIds),
-      hiddenAppIds: mapList(settings.hiddenAppIds)
+      hiddenAppIds: mapList(settings.hiddenAppIds),
+      activeWidgets: (settings.activeWidgets || []).filter(
+        w => w.widgetId !== 'calendar' && w.widgetId !== 'weather'
+      )
     }
 
     await storageService.set('settings', updatedSettings)
 
     // Mark migration as done
     await storageService.set(MIGRATION_KEY, true)
+    await storageService.set('migration_minimalism_v2', true)
     console.log('[SuperDash] Minimalism migration successfully applied.')
     return { migrated: true, remindersImported }
   } catch (err) {

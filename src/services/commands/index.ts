@@ -1,17 +1,13 @@
 import { CommandItem } from '@/types'
 import {
-  Calculator,
-  Calendar,
   FileText,
   CheckSquare,
   Timer,
   ArrowLeftRight,
   Settings,
-  CloudSun,
   Moon,
   Clock,
   Bell,
-  Folder,
   Scale,
   Wallet,
   Lightbulb,
@@ -19,8 +15,6 @@ import {
   BookMarked,
   Sunrise,
   Shuffle,
-  BookOpen,
-  Quote as QuoteIcon,
   Sparkles,
   Heart
 } from 'lucide-react'
@@ -412,16 +406,6 @@ export function setupDefaultCommands(actions: {
       }
     },
     {
-      id: 'cmd-open-calc',
-      title: 'Open Calculator',
-      description: 'Launch the standard and scientific calculator',
-      category: 'apps',
-      keywords: ['calculator', 'math', 'open', 'calc'],
-      icon: Calculator,
-      shortcut: 'C',
-      execute: () => actions.openApp('calculator')
-    },
-    {
       id: 'cmd-create-note',
       title: 'Create Note',
       description: 'Open Notes app and start drafting a new note',
@@ -472,15 +456,6 @@ export function setupDefaultCommands(actions: {
       }
     },
     {
-      id: 'cmd-open-calendar',
-      title: 'Open Calendar',
-      description: 'View monthly schedule and today agenda',
-      category: 'apps',
-      keywords: ['calendar', 'events', 'schedule', 'agenda'],
-      icon: Calendar,
-      execute: () => actions.openApp('calendar')
-    },
-    {
       id: 'cmd-convert-usd-aed',
       title: 'Convert USD to AED',
       description: 'Check live exchange rates between US Dollar and UAE Dirham',
@@ -508,15 +483,6 @@ export function setupDefaultCommands(actions: {
       execute: () => actions.toggleTheme()
     },
     {
-      id: 'cmd-open-weather',
-      title: 'Open Weather',
-      description: 'View atmospheric conditions and 7-day forecast',
-      category: 'apps',
-      keywords: ['weather', 'forecast', 'rain', 'temp', 'temperature'],
-      icon: CloudSun,
-      execute: () => actions.openApp('weather')
-    },
-    {
       id: 'cmd-open-reminders',
       title: 'Open Reminders',
       description: 'Check upcoming notifications and deadlines',
@@ -524,15 +490,6 @@ export function setupDefaultCommands(actions: {
       keywords: ['reminders', 'alerts', 'notifications'],
       icon: Bell,
       execute: () => actions.openApp('reminders')
-    },
-    {
-      id: 'cmd-open-files',
-      title: 'Open Files',
-      description: 'Explore documents, spreadsheets, and stored files',
-      category: 'apps',
-      keywords: ['files', 'documents', 'docs', 'storage'],
-      icon: Folder,
-      execute: () => actions.openApp('files')
     },
     {
       id: 'cmd-open-worldclock',
@@ -551,35 +508,6 @@ export function setupDefaultCommands(actions: {
       keywords: ['settings', 'preferences', 'wallpaper', 'glass', 'configure'],
       icon: Settings,
       execute: () => actions.openApp('settings')
-    },
-    // --- READER COMMANDS ---
-    {
-      id: 'cmd-open-reader',
-      title: 'Open Reader',
-      description: 'Distraction-free article reader with highlights and translation',
-      category: 'apps',
-      keywords: ['reader', 'read', 'article', 'book', 'clean', 'distraction free'],
-      icon: BookOpen,
-      shortcut: 'R',
-      execute: () => actions.openApp('reader')
-    },
-    {
-      id: 'cmd-reader-quotes',
-      title: 'View Saved Quotes',
-      description: 'Explore wisdom and saved quotations across your reading library',
-      category: 'productivity',
-      keywords: ['quotes', 'quotations', 'wisdom', 'reader', 'saved'],
-      icon: QuoteIcon,
-      execute: () => actions.openApp('reader', { initialTab: 'quotes' })
-    },
-    {
-      id: 'cmd-reader-library',
-      title: 'Reading Library',
-      description: 'Browse in-progress, unread, finished, and favorite articles',
-      category: 'productivity',
-      keywords: ['library', 'reading', 'articles', 'unread', 'reader'],
-      icon: BookOpen,
-      execute: () => actions.openApp('reader')
     },
     // --- LIVE COMMANDS ---
     {

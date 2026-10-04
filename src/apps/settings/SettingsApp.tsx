@@ -42,20 +42,15 @@ import { updateService } from '@/services/updateService'
 
 const APP_META: Record<string, string> = {
   notes: 'Notes',
-  calendar: 'Calendar',
   tasks: 'Tasks',
   ideas: 'Ideas',
   decisionbook: 'Decision Book',
-  collections: 'Collections',
-  reader: 'Reader',
   live: 'Live',
+  collections: 'Collections',
   hearings: 'Hearings',
   finance: 'Finance',
   growth: 'Growth',
-  calculator: 'Calculator',
   time: 'Time',
-  weather: 'Weather',
-  files: 'Files',
   settings: 'Settings'
 }
 

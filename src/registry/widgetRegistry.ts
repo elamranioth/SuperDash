@@ -1,9 +1,7 @@
 import { ComponentType } from 'react'
 import {
   Coins,
-  CloudSun,
   Clock,
-  Calendar,
   FileText,
   CheckSquare,
   Timer,
@@ -42,24 +40,6 @@ const WIDGET_REGISTRY: WidgetDefinition[] = [
     defaultSize: 'sm',
     supportedSizes: ['sm', 'md'],
     category: 'clock'
-  },
-  {
-    id: 'weather',
-    name: 'Atmospheric Weather',
-    description: 'Current live temperature, forecast icon, and high/low range',
-    icon: CloudSun,
-    defaultSize: 'sm',
-    supportedSizes: ['sm', 'md'],
-    category: 'weather'
-  },
-  {
-    id: 'calendar',
-    name: 'Today Agenda',
-    description: 'Quick overview of today scheduled calendar events',
-    icon: Calendar,
-    defaultSize: 'sm',
-    supportedSizes: ['sm', 'md'],
-    category: 'productivity'
   },
   {
     id: 'quicknotes',

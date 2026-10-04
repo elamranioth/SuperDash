@@ -2,26 +2,21 @@ import { describe, it, expect } from 'vitest'
 import { getRegisteredApps, getAppById } from '@/registry/appRegistry'
 
 describe('Universal Search & App Registry - Integrity & Deep Linking', () => {
-  it('contains exactly the authorized 16 registered apps in AppRegistry', () => {
+  it('contains exactly the authorized 11 registered apps in AppRegistry', () => {
     const apps = getRegisteredApps()
-    expect(apps.length).toBe(16)
+    expect(apps.length).toBe(11)
 
     const expectedAppIds = [
       'notes',
-      'calendar',
       'tasks',
       'ideas',
       'decisionbook',
-      'reader',
       'live',
       'collections',
       'hearings',
       'finance',
       'growth',
-      'calculator',
       'time',
-      'weather',
-      'files',
       'settings'
     ]
 
@@ -42,6 +37,14 @@ describe('Universal Search & App Registry - Integrity & Deep Linking', () => {
   })
 
   it('verifies deep link parameters for primary modules', () => {
+    // Notes deep link
+    const notesApp = getAppById('notes')
+    expect(notesApp).toBeDefined()
+
+    // Tasks deep link
+    const tasksApp = getAppById('tasks')
+    expect(tasksApp).toBeDefined()
+
     // Finance deep link
     const financeApp = getAppById('finance')
     expect(financeApp).toBeDefined()
@@ -53,9 +56,5 @@ describe('Universal Search & App Registry - Integrity & Deep Linking', () => {
     // Hearings deep link
     const hearingsApp = getAppById('hearings')
     expect(hearingsApp).toBeDefined()
-
-    // Reader deep link
-    const readerApp = getAppById('reader')
-    expect(readerApp).toBeDefined()
   })
 })
