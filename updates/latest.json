@@ -1,0 +1,42 @@
+{
+  "version": "1.7.1",
+  "releaseDate": "2026-10-04",
+  "title": "SuperDash 1.7.1 — Plan Mobile UI Redesign & Cloudflare Edge",
+  "summary": "Major mobile UI redesign for the Plan app featuring Microsoft To-Do scale, Claude/Anthropic typography, compact side navigation, and integrated vector glyphs.",
+  "minAppVersion": "1.0.0",
+  "downloadUrl": "https://superdash-ero.pages.dev/SuperDash.apk",
+  "apkDownloadUrl": "https://superdash-ero.pages.dev/SuperDash.apk",
+  "highlights": [
+    "Plan App mobile redesign: Microsoft To-Do scale, comfortable 48-56px touch targets",
+    "Claude / Anthropic style calm, legible sans-serif typography across Plan & Tasks",
+    "Compact side navigation drawer with dark blurred backdrop overlay",
+    "Integrated single-glyph Add Task / Add Note vector action icons",
+    "Deployed to Cloudflare Pages high-speed edge CDN"
+  ],
+  "changes": [
+    {
+      "appId": "growth",
+      "appName": "Growth",
+      "type": "NEW",
+      "description": "Marketing and client-retention app: Today action dashboard, lightweight leads pipeline, client relationship timeline, and 10 practical playbooks."
+    },
+    {
+      "appId": "updates",
+      "appName": "Updates Engine",
+      "type": "FIXED",
+      "description": "Resolved Android download issues with native DownloadManager integration, direct APK fallback, and live remote manifest queries."
+    },
+    {
+      "appId": "home",
+      "appName": "Home Screen",
+      "type": "IMPROVED",
+      "description": "Simplified Home composition: compact header, universal search, clean 4-column grid with Growth icon."
+    },
+    {
+      "appId": "controlcenter",
+      "appName": "Quick Controls",
+      "type": "IMPROVED",
+      "description": "Header sliders button opens a native Liquid Glass Bottom Sheet without shifting or expanding the header."
+    }
+  ]
+}

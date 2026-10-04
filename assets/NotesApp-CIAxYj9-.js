@@ -1,0 +1,1 @@
+import{t as e,v as t}from"./jsx-runtime-DMvf8K8x.js";import n from"./PlanApp-CMB3uY9o.js";t();var r=e();function i(e){return(0,r.jsx)(n,{...e,initialTab:`notes`})}export{i as default};
