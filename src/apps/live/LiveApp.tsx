@@ -18,7 +18,7 @@ import NowWorld from './NowWorld'
 import KeepWorld from './KeepWorld'
 import HumanWorld from './HumanWorld'
 import StayModal from './StayModal'
-import WellnessRemindersSection from './WellnessRemindersSection'
+import WellnessDashboard from './WellnessDashboard'
 import GlassPanel from '@/components/LiquidGlass/GlassPanel'
 
 export type LiveWorld = 'NOW' | 'KEEP' | 'HUMAN'
@@ -236,7 +236,7 @@ export default function LiveApp({ initialWorld = 'NOW', openWellness = false }: 
             </div>
 
             {settingsTab === 'wellness' ? (
-              <WellnessRemindersSection
+              <WellnessDashboard
                 settings={wellnessSettings}
                 onSettingsChange={setWellnessSettings}
               />
