@@ -122,7 +122,7 @@ export default function DataBackupSettings() {
       sounds.playSuccess()
       setFeedback({
         type: 'success',
-        message: `Backup saved to ${res.location} (${(res.fileSize / 1024).toFixed(1)} KB)`
+        message: `Backup saved to ${res.location} (${(res.fileSize / 1024).toFixed(1)} KB)${res.isEncrypted ? ' • Encrypted (AES-256-GCM)' : ''}`
       })
       const updated = await backupService.getSettings()
       setSettings(updated)
@@ -188,7 +188,17 @@ export default function DataBackupSettings() {
 
     try {
       const text = await file.text()
-      const inspected = await backupService.inspectBackup(text)
+      let inspected = await backupService.inspectBackup(text)
+
+      if (inspected.needsPassphrase) {
+        const passphrase = window.prompt('This backup package is encrypted with AES-256-GCM. Please enter your backup passphrase:')
+        if (!passphrase) {
+          setFeedback({ type: 'error', message: 'Passphrase required to restore encrypted backup.' })
+          return
+        }
+        inspected = await backupService.inspectBackup(text, passphrase)
+      }
+
       if (inspected.valid && inspected.pkg && inspected.manifest) {
         sounds.playClick()
         setCandidatePackage(inspected.pkg)

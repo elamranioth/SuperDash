@@ -1,5 +1,6 @@
 import { storageService } from '@/services/storage'
 import { SUPERDASH_VERSION } from '@/version'
+import { securityService } from '@/services/security'
 
 export const STORAGE_SCHEMA_VERSION = 10
 export const BACKUP_FORMAT_VERSION = 1
@@ -16,6 +17,16 @@ export interface BackupManifest {
 export interface BackupPackage {
   manifest: BackupManifest
   data: Record<string, unknown>
+}
+
+export interface EncryptedBackupPackage {
+  format: 'superdash-encrypted-v1'
+  encryptedAt: string
+  payload: {
+    ciphertext: string
+    salt: string
+    iv: string
+  }
 }
 
 export type AutoBackupFrequency = 'daily' | 'weekly' | 'manual'
@@ -289,20 +300,39 @@ export class BackupService {
    * Perform a backup operation.
    * If a folder handle is connected (MEGA folder), writes directly into it with 7-day retention.
    * If on Android or no folder handle, offers file download / share.
+   * If backup encryption is enabled or passphrase provided, encrypts with AES-256-GCM.
    */
-  async performBackup(): Promise<{
+  async performBackup(passphrase?: string): Promise<{
     success: boolean
     filename: string
     fileSize: number
     location: string
+    isEncrypted?: boolean
     error?: string
   }> {
     try {
       const pkg = await this.generateBackupPackage()
-      const content = JSON.stringify(pkg, null, 2)
+      const rawContent = JSON.stringify(pkg, null, 2)
+      const secSettings = await securityService.getSettings()
+
+      let finalContent = rawContent
+      let isEncrypted = false
+
+      if (passphrase || secSettings.backupEncryptionEnabled) {
+        const pass = passphrase || secSettings.pinHash || 'SuperDashVaultKey'
+        const encryptedPayload = await securityService.encryptPayload(rawContent, pass)
+        const encryptedPkg: EncryptedBackupPackage = {
+          format: 'superdash-encrypted-v1',
+          encryptedAt: new Date().toISOString(),
+          payload: encryptedPayload
+        }
+        finalContent = JSON.stringify(encryptedPkg, null, 2)
+        isEncrypted = true
+      }
+
       const datePart = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 16)
-      const filename = `SuperDash-Backup-${datePart}.superdash`
-      const fileSize = new Blob([content]).size
+      const filename = `SuperDash-Backup-${datePart}${isEncrypted ? '.enc' : ''}.superdash`
+      const fileSize = new Blob([finalContent]).size
 
       // 1. Try Writing into Connected Directory Handle (MEGA folder)
       const handle = await getFolderHandle()
@@ -320,7 +350,7 @@ export class BackupService {
             // Write file
             const fileHandle = await handle.getFileHandle(filename, { create: true })
             const writable = await fileHandle.createWritable()
-            await writable.write(content)
+            await writable.write(finalContent)
             await writable.close()
 
             // Apply retention: keep last 7 SuperDash backups in that directory
@@ -345,7 +375,7 @@ export class BackupService {
       // 2. Mobile Android Web Share API (if available and user can share to MEGA or Files)
       if (typeof navigator !== 'undefined' && navigator.share && navigator.canShare) {
         try {
-          const file = new File([content], filename, { type: 'application/json' })
+          const file = new File([finalContent], filename, { type: 'application/json' })
           if (navigator.canShare({ files: [file] })) {
             await navigator.share({
               title: 'SuperDash Backup',
@@ -362,7 +392,7 @@ export class BackupService {
               lastBackupError: undefined
             })
 
-            return { success: true, filename, fileSize, location }
+            return { success: true, filename, fileSize, location, isEncrypted }
           }
         } catch {
           // User may have dismissed share or platform failed; fallback to download
@@ -370,7 +400,7 @@ export class BackupService {
       }
 
       // 3. Fallback: Browser Download
-      const blob = new Blob([content], { type: 'application/json' })
+      const blob = new Blob([finalContent], { type: 'application/json' })
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
@@ -438,24 +468,49 @@ export class BackupService {
   }
 
   /**
-   * Inspect and validate a backup file before restoring
+   * Inspect and validate a backup file before restoring.
+   * If the file is encrypted (AES-256-GCM), uses provided passphrase or prompts for it.
    */
-  async inspectBackup(content: string): Promise<{
+  async inspectBackup(content: string, passphrase?: string): Promise<{
     valid: boolean
     pkg?: BackupPackage
     manifest?: BackupManifest
+    isEncrypted?: boolean
+    needsPassphrase?: boolean
     error?: string
   }> {
     try {
       const parsed = JSON.parse(content)
 
-      // Format check: either BackupPackage or legacy raw export
+      // 1. Check for Encrypted Backup Format
+      if (parsed.format === 'superdash-encrypted-v1' && parsed.payload) {
+        if (!passphrase) {
+          return { valid: true, isEncrypted: true, needsPassphrase: true }
+        }
+
+        try {
+          const decryptedPlaintext = await securityService.decryptPayload(parsed.payload, passphrase)
+          const decryptedPkg = JSON.parse(decryptedPlaintext) as BackupPackage
+          if (!decryptedPkg.manifest || !decryptedPkg.data) {
+            return { valid: false, error: 'Decrypted backup is not a valid SuperDash package' }
+          }
+          return { valid: true, pkg: decryptedPkg, manifest: decryptedPkg.manifest, isEncrypted: true }
+        } catch (decryptErr) {
+          return {
+            valid: false,
+            isEncrypted: true,
+            error: decryptErr instanceof Error ? decryptErr.message : 'Invalid backup passphrase'
+          }
+        }
+      }
+
+      // 2. Format check: standard unencrypted BackupPackage
       if (parsed.manifest && parsed.data) {
         const pkg = parsed as BackupPackage
         if (!pkg.manifest.backupVersion || !pkg.manifest.modules) {
           return { valid: false, error: 'Invalid backup manifest structure' }
         }
-        return { valid: true, pkg, manifest: pkg.manifest }
+        return { valid: true, pkg, manifest: pkg.manifest, isEncrypted: false }
       }
 
       // Legacy direct storage export format fallback

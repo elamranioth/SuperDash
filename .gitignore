@@ -13,10 +13,21 @@ dist
 dist-ssr
 *.local
 
-# Environment files
+# Environment files and credentials
 .env
-.env.*.local
+.env.*
 !.env.example
+*.local
+*.secret
+*.key
+*.pem
+*.cert
+*.crt
+*.pfx
+*.p12
+.dev.vars
+wrangler.toml.local
+credentials.json
 
 # Editor directories and files
 .vscode/*

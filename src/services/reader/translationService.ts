@@ -3,11 +3,14 @@ import { storageService } from '@/services/storage'
 
 const CACHE_KEY = 'reader_translations_cache'
 
-// Quick helper to decode HTML entities returned by translation APIs
+// Quick helper to safely decode HTML entities returned by translation APIs
 function decodeHtmlEntities(str: string): string {
-  const txt = document.createElement('textarea')
-  txt.innerHTML = str
-  return txt.value
+  if (!str) return ''
+  if (typeof DOMParser !== 'undefined') {
+    const doc = new DOMParser().parseFromString(str, 'text/html')
+    return doc.documentElement.textContent || ''
+  }
+  return str.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'")
 }
 
 class TranslationService {

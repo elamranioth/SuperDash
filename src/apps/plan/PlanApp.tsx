@@ -118,14 +118,17 @@ const COLOR_OPTIONS = [
   { name: 'Sky', value: '#0ea5e9' }
 ]
 
+import { sanitizeHtml } from '@/services/security/sanitizer'
+
 /**
  * Convert legacy markdown syntax to clean HTML so users see visual formatting
  * instead of raw Markdown symbols (**text**, *text*, > quote).
+ * Sanitizes all output with defense-in-depth HTML sanitizer.
  */
 function markdownToHtml(md: string): string {
   if (!md) return ''
   if (/<(p|b|strong|i|em|blockquote|ul|ol|li|h[1-6]|div|span)[^>]*>/i.test(md)) {
-    return md
+    return sanitizeHtml(md)
   }
   let html = md
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
@@ -142,7 +145,7 @@ function markdownToHtml(md: string): string {
 
   html = html.replace(/<\/ul>\s*<ul>/g, '')
   html = html.replace(/<\/ol>\s*<ol>/g, '')
-  return html
+  return sanitizeHtml(html)
 }
 
 export default function PlanApp({

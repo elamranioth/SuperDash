@@ -34,16 +34,35 @@ export default function AppLockScreen({ onUnlocked }: AppLockScreenProps) {
   }
 
   const attemptUnlock = async (pinCandidate: string) => {
-    const valid = await securityService.unlockWithPin(pinCandidate)
-    if (valid) {
-      onUnlocked()
-    } else if (pinCandidate.length >= 4) {
-      setError('Incorrect PIN')
+    const lockoutSec = securityService.getRemainingLockoutSeconds()
+    if (lockoutSec > 0) {
+      setError(`Too many attempts. Locked for ${lockoutSec}s`)
       setShake(true)
-      setTimeout(() => {
-        setShake(false)
-        setPin('')
-      }, 500)
+      setTimeout(() => setShake(false), 500)
+      return
+    }
+
+    try {
+      const valid = await securityService.unlockWithPin(pinCandidate)
+      if (valid) {
+        onUnlocked()
+      } else if (pinCandidate.length >= 4) {
+        const afterLockout = securityService.getRemainingLockoutSeconds()
+        if (afterLockout > 0) {
+          setError(`Too many attempts. Locked for ${afterLockout}s`)
+        } else {
+          setError('Incorrect PIN')
+        }
+        setShake(true)
+        setTimeout(() => {
+          setShake(false)
+          setPin('')
+        }, 500)
+      }
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Incorrect PIN')
+      setShake(true)
+      setTimeout(() => setShake(false), 500)
     }
   }
 

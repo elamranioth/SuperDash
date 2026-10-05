@@ -38,6 +38,35 @@ describe('Security Service - PIN Hashing, Auto-Lock & AES-GCM Encryption', () =>
     expect(lockedNow).toBe(false)
   })
 
+  it('enforces lockout delay and counts failed attempts on bad PIN', async () => {
+    const salt = 'a1b2c3d4e5f60718293a4b5c6d7e8f90'
+    const correctPin = '1234'
+    const hash = await securityService.hashPin(correctPin, salt)
+
+    // Reset attempt counters
+    securityService.resetAttempts()
+    expect(securityService.isLockedOut()).toBe(false)
+    expect(securityService.getFailedAttempts()).toBe(0)
+
+    // Try wrong PIN
+    const match1 = await securityService.verifyPin('0000', hash, salt)
+    expect(match1).toBe(false)
+    expect(securityService.getFailedAttempts()).toBe(1)
+
+    // 5 failures trigger lockout
+    await securityService.verifyPin('0001', hash, salt)
+    await securityService.verifyPin('0002', hash, salt)
+    await securityService.verifyPin('0003', hash, salt)
+    await securityService.verifyPin('0004', hash, salt)
+
+    expect(securityService.getFailedAttempts()).toBe(5)
+    expect(securityService.isLockedOut()).toBe(true)
+    expect(securityService.getRemainingLockoutSeconds()).toBeGreaterThan(0)
+
+    // Clean up
+    securityService.resetAttempts()
+  })
+
   it('encrypts and decrypts payload using AES-GCM 256-bit with PBKDF2', async () => {
     const sensitivePayload = JSON.stringify({
       notes: [{ id: 'n1', title: 'Confidential Client Note', secret: 'abc' }],
@@ -64,3 +93,4 @@ describe('Security Service - PIN Hashing, Auto-Lock & AES-GCM Encryption', () =>
     ).rejects.toThrow(/Decryption failed/)
   })
 })
+

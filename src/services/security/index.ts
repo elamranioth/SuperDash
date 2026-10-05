@@ -57,6 +57,8 @@ export class SecurityService {
   private inMemoryLocked = false
   private lastActiveTimestamp: number = Date.now()
   private listeners: Set<(locked: boolean) => void> = new Set()
+  private failedAttempts = 0
+  private lockoutUntil = 0
 
   constructor() {
     this.initSession()
@@ -144,29 +146,84 @@ export class SecurityService {
   }
 
   /**
-   * Verify an entered PIN against the stored hash.
+   * Check if unlock attempts are currently locked out due to rate limiting.
    */
-  public async verifyPin(pin: string): Promise<boolean> {
-    const settings = await this.getSettings()
-    if (!settings.appLockEnabled || !settings.pinSalt || !settings.pinHash) {
-      return true
+  public getRemainingLockoutSeconds(): number {
+    const now = Date.now()
+    if (this.lockoutUntil > now) {
+      return Math.ceil((this.lockoutUntil - now) / 1000)
     }
-    const computed = await this.hashPin(pin, settings.pinSalt)
-    return computed === settings.pinHash
+    return 0
+  }
+
+  public isLockedOut(): boolean {
+    return this.getRemainingLockoutSeconds() > 0
+  }
+
+  public getFailedAttempts(): number {
+    return this.failedAttempts
+  }
+
+  public resetAttempts(): void {
+    this.failedAttempts = 0
+    this.lockoutUntil = 0
+  }
+
+  /**
+   * Verify an entered PIN against the stored hash (or provided hash/salt) with brute-force rate limiting.
+   */
+  public async verifyPin(pin: string, expectedHash?: string, expectedSalt?: string): Promise<boolean> {
+    const remaining = this.getRemainingLockoutSeconds()
+    if (remaining > 0) {
+      throw new Error(`Too many incorrect attempts. Please wait ${remaining} seconds.`)
+    }
+
+    let targetHash = expectedHash
+    let targetSalt = expectedSalt
+
+    if (!targetHash || !targetSalt) {
+      const settings = await this.getSettings()
+      if (!settings.appLockEnabled || !settings.pinSalt || !settings.pinHash) {
+        return true
+      }
+      targetHash = settings.pinHash
+      targetSalt = settings.pinSalt
+    }
+
+    const computed = await this.hashPin(pin, targetSalt)
+    const matches = computed === targetHash
+
+    if (matches) {
+      this.failedAttempts = 0
+      this.lockoutUntil = 0
+      return true
+    } else {
+      this.failedAttempts++
+      if (this.failedAttempts >= 5) {
+        // Lockout for 30 seconds on 5 failed attempts, 60s on 6+
+        const penaltySeconds = Math.min(30 * Math.pow(2, this.failedAttempts - 5), 300)
+        this.lockoutUntil = Date.now() + penaltySeconds * 1000
+      }
+      return false
+    }
   }
 
   /**
    * Unlock SuperDash with PIN.
    */
   public async unlockWithPin(pin: string): Promise<boolean> {
-    const valid = await this.verifyPin(pin)
-    if (valid) {
-      this.inMemoryLocked = false
-      this.recordActivity()
-      this.notifyListeners()
-      return true
+    try {
+      const valid = await this.verifyPin(pin)
+      if (valid) {
+        this.inMemoryLocked = false
+        this.recordActivity()
+        this.notifyListeners()
+        return true
+      }
+      return false
+    } catch {
+      return false
     }
-    return false
   }
 
   /**
