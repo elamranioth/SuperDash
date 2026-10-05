@@ -157,7 +157,11 @@ export default function Dashboard() {
     } else if (appId === 'morning') {
       dashboardRepository.setActiveDashboard('dash-morning').catch(() => {})
       return
+    } else if (appId === 'wellness') {
+      appId = 'live'
+      customProps = { ...(customProps || {}), openWellness: true }
     }
+
 
     recentAppsService.recordAppLaunch(appId)
     setOpenAppIds(prev => (prev.includes(appId) ? prev : [...prev, appId]))

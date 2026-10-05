@@ -75,7 +75,7 @@ const APP_REGISTRY: RegisteredApp[] = [
     description: 'A gentle reminder to pause, look around, notice nature, remember loved ones, and live today',
     icon: LiveIcon,
     category: 'productivity',
-    keywords: ['live', 'pause', 'moment', 'human', 'rest', 'reflect', 'breathe', 'nature', 'peace', 'memories', 'somewhere', 'people', 'life'],
+    keywords: ['live', 'wellness', 'water', 'hydration', 'desk', 'stretch', 'breathe', 'breathing', 'eye break', 'pause', 'moment', 'human', 'rest', 'reflect', 'peace', 'life'],
     gradient: 'from-amber-400 via-rose-400 to-orange-500',
     component: LiveApp,
     defaultWindowSize: { width: 960, height: 680 }

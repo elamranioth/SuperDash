@@ -21,6 +21,7 @@ import RightNowModal from './RightNowModal'
 interface NowWorldProps {
   onGoToKeep: () => void
   onGoToHuman: () => void
+  onOpenWellness?: () => void
 }
 
 const GENTLE_QUESTIONS = [
@@ -34,7 +35,7 @@ const GENTLE_QUESTIONS = [
   'When was the last time you helped someone who could do nothing for you?'
 ]
 
-export default function NowWorld({ onGoToKeep, onGoToHuman }: NowWorldProps) {
+export default function NowWorld({ onGoToKeep, onGoToHuman, onOpenWellness }: NowWorldProps) {
   const context = useMemo(() => getSafeLiveContext(), [])
   const beautifulThing = useMemo(() => getTodayBeautifulThing(), [])
 
@@ -163,7 +164,21 @@ export default function NowWorld({ onGoToKeep, onGoToHuman }: NowWorldProps) {
             <Maximize2 className="w-3.5 h-3.5" />
             <span>Stay</span>
           </button>
+
+          {onOpenWellness && (
+            <button
+              onClick={() => {
+                sounds.playClick()
+                onOpenWellness()
+              }}
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/20 transition-all active:scale-95"
+            >
+              <Heart className="w-3.5 h-3.5" />
+              <span>Wellness</span>
+            </button>
+          )}
         </div>
+
 
         {/* Gentle World Gateways */}
         <div className="flex items-center gap-6 text-xs text-slate-400 pt-2">
